@@ -212,6 +212,6 @@ AGENTS.md              panduan untuk ejen AI (Claude Code, Codex, …)
 
 ## Lesen
 
-- Kod repo ini: MIT.
+- Kod dan dokumen repo ini: MIT, lihat [LICENSE](LICENSE).
 - Model Chatterbox: MIT (Resemble AI).
 - Suara dan rakaman dalam `bank/`, `rujukan/` dan `sampel/`: tertakluk pada **Terma guna suara saya** di atas.
