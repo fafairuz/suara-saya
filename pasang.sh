@@ -5,7 +5,8 @@ set -e
 D=$(cd "$(dirname "$0")" && pwd)
 PY311=${PY311:-$(command -v python3.11 || true)}
 [ -n "$PY311" ] || { echo "Perlu python3.11 (brew install python@3.11)"; exit 1; }
-for t in ffmpeg whisper-cli; do command -v $t >/dev/null || { echo "Perlu $t (brew install ffmpeg whisper-cpp)"; exit 1; }; done
+command -v ffmpeg >/dev/null || { echo "Perlu ffmpeg (macOS: brew install ffmpeg)"; exit 1; }
+command -v whisper-cli >/dev/null || echo "Pilihan: whisper-cli tiada (brew install whisper-cpp). Tanpanya: jana tanpa semakan, perakam tak jalan."
 [ -x "$D/.venv/bin/python" ] || "$PY311" -m venv "$D/.venv"
 "$D/.venv/bin/pip" install -q --upgrade pip
 "$D/.venv/bin/pip" install -q -r "$D/requirements.txt"
@@ -18,6 +19,6 @@ snapshot_download('ResembleAI/chatterbox', local_dir='$D/models/chatterbox', all
   rm -rf "$D/models/.hf"
 fi
 W=${WHISPER_MODEL:-$HOME/.local/share/whisper/models/ggml-large-v3-turbo.bin}
-[ -f "$W" ] || echo "AMARAN: model whisper tiada di $W (perlu untuk semakan)"
+[ -f "$W" ] || echo "Pilihan: model whisper tiada di $W (untuk semakan). Muat turun ggml-large-v3-turbo.bin dari huggingface.co/ggerganov/whisper.cpp"
 "$D/bin/suara" semak
 echo "Siap. venv $(du -sh "$D/.venv" | cut -f1), model $(du -sh "$D/models" | cut -f1)."

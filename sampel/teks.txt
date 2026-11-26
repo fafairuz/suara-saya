@@ -1,0 +1,3 @@
+Bila dokumen sampai, sistem kira hash dia. Lepas tu, hash tu disimpan dalam blockchain sebagai cryptographic proof.
+Kita host LLM sendiri on-prem. Jadi data sensitif tak keluar langsung dari rangkaian agensi.
+Dashboard ni tunjuk status workflow secara real-time, dari request masuk sampai approval akhir.

@@ -1,7 +1,8 @@
 """Jana suara: `jana` (kontrak v1, video-template/docs/kontrak-suara.md) dan `cakap` (guna pantas macam edge-tts)."""
 import json, re, sys, time
 from pathlib import Path
-from . import VERSI
+import os, shutil
+from . import VERSI, WHISPER_MODEL
 from .sebutan import tukar
 from .dengar import whisper, skor_terbaik
 from .bank import rujukan
@@ -21,6 +22,8 @@ class Enjin:
         t0 = time.time(); self.m = muat()
         self.ruj, self.ket = rujukan(gaya)
         self.m.prepare_conditionals(str(self.ruj), exaggeration=0.5)
+        self.boleh_semak = bool(shutil.which('whisper-cli')) and os.path.exists(WHISPER_MODEL)
+        if not self.boleh_semak: log('  (whisper-cli atau modelnya tiada: semakan dan cuba semula dimatikan)')
         log(f'  suara-saya {VERSI}: model dimuat {time.time() - t0:.0f} s, gaya {gaya} ({self.ket})')
 
     @property
@@ -29,7 +32,7 @@ class Enjin:
 
     def satu(self, teks, benih=7, lang='ms', cuba=3, semak=True):
         """jana satu ayat; semak dengan whisper dan cuba semula dengan benih lain. Pulang (wav, teks_dihantar, skor, didengar, benih)"""
-        dihantar = tukar(teks, self.istilah); terbaik = None
+        dihantar = tukar(teks, self.istilah); terbaik = None; semak = semak and self.boleh_semak
         for k in range(cuba if semak else 1):
             b = int(benih) + 1000 * k
             self.torch.manual_seed(b)
@@ -57,7 +60,7 @@ def jana(masuk, keluar):
         w, dihantar, s, h, b = E.satu(a['teks'], a.get('benih', 7), lang)
         sf.write(out / f"{a['id']}.wav", w.astype(np.float32), E.sr)
         res.append(dict(id=a['id'], fail=f"{a['id']}.wav", teks_dihantar=dihantar, skor_whisper=s, didengar=h, benih=b))
-        log(f"  {a['id']}: {len(w) / E.sr:.1f} s audio, {time.time() - t0:.0f} s, skor {s:.0%} | {dihantar}")
+        log(f"  {a['id']}: {len(w) / E.sr:.1f} s audio, {time.time() - t0:.0f} s, " + (f'skor {s:.0%} ' if s is not None else '') + f"| {dihantar}")
     json.dump(dict(enjin=dict(nama='suara-saya', versi=VERSI, model='chatterbox-multilingual-v3', gaya=gaya, rujukan=E.ket), ayat=res),
               open(out / 'hasil.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 
@@ -66,10 +69,10 @@ def pecah_ayat(t):
     return [s.strip() for s in re.split(r'(?<=[.!?])\s+|\n+', t) if s.strip()]
 
 
-def cakap(teks, gaya, keluar, benih=7, semak=True):
+def cakap(teks, gaya, keluar, benih=7, semak=True, istilah=None):
     import numpy as np, soundfile as sf, subprocess
     if teks == '-': teks = sys.stdin.read()
-    E = Enjin(gaya); bahagian = []; jeda = np.zeros(int(0.35 * E.sr), np.float32)
+    E = Enjin(gaya, istilah); bahagian = []; jeda = np.zeros(int(0.35 * E.sr), np.float32)
     for s in pecah_ayat(teks):
         w, dihantar, sk, h, b = E.satu(s, benih, semak=semak)
         bahagian += [w.astype(np.float32), jeda]
