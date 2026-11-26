@@ -1,0 +1,10 @@
+# besar / boleh dijana semula — tidak masuk git
+.venv/
+models/
+__pycache__/
+*.pyc
+.DS_Store
+# output sementara
+ujian/ab/*.16k.wav
+keluar/
+kerja/

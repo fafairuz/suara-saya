@@ -1,0 +1,128 @@
+[
+ {
+  "no": 1,
+  "varian": "A",
+  "teks_dihantar": "Kita host LLM sendiri on-prem.",
+  "whisper": "Kita host, ilmeh Sendiri On-Prem.",
+  "saat": 2.9
+ },
+ {
+  "no": 1,
+  "varian": "B",
+  "teks_dihantar": "Kita host elelem sendiri onprem.",
+  "whisper": "Kita host LLM sendiri onplem.",
+  "saat": 2.9
+ },
+ {
+  "no": 1,
+  "varian": "C",
+  "teks_dihantar": "Kita host el el em sendiri on prem.",
+  "whisper": "Ikita Host LLM Sendiri On-Prem",
+  "saat": 3.7
+ },
+ {
+  "no": 2,
+  "varian": "A",
+  "teks_dihantar": "Untuk demo ni, jangan masukkan data PII sebenar dalam log.",
+  "whisper": "Untuk demo ni, jangan masukkan data v-sebenar dalam log.",
+  "saat": 4.4
+ },
+ {
+  "no": 2,
+  "varian": "B",
+  "teks_dihantar": "Untuk demo ni, jangan masukkan data piiaiai sebenar dalam log.",
+  "whisper": "Untuk demo ini, jangan masukkan data PII seminar dalam log.",
+  "saat": 4.7
+ },
+ {
+  "no": 2,
+  "varian": "C",
+  "teks_dihantar": "Untuk demo ni, jangan masukkan data pii ai ai sebenar dalam log.",
+  "whisper": "Untuk demo ni, jangan masukkan Datapi AI seminar dalam log.",
+  "saat": 5.0
+ },
+ {
+  "no": 3,
+  "varian": "A",
+  "teks_dihantar": "Cuma cryptographic proof yang dihantar ke MBI trust layer.",
+  "whisper": "Kuma Cryptographic Proof yang dihantar KMP Trust Layer.",
+  "saat": 4.4
+ },
+ {
+  "no": 3,
+  "varian": "B",
+  "teks_dihantar": "Cuma cryptographic proof yang dihantar ke embiiai tras leiyer.",
+  "whisper": "Kuma Cryptographic Proof Yang dihantar KMBI Trust Layer.",
+  "saat": 5.1
+ },
+ {
+  "no": 3,
+  "varian": "C",
+  "teks_dihantar": "Cuma cryptographic proof yang dihantar ke em bii ai tras lei yer.",
+  "whisper": "Kuma cryptographic proof yang diantar ke MBIE just lay year.",
+  "saat": 4.3
+ },
+ {
+  "no": 4,
+  "varian": "A",
+  "teks_dihantar": "Untuk demo deepfake ni, kita guna rakaman simulasi.",
+  "whisper": "untuk demo deepfake ni kita guna rekaman simulasi",
+  "saat": 4.4
+ },
+ {
+  "no": 4,
+  "varian": "B",
+  "teks_dihantar": "Untuk demo diipfeik ni, kita guna rakaman simulasi.",
+  "whisper": "Untuk demo deepfake ni, kita guna rakaman simulasi.",
+  "saat": 4.1
+ },
+ {
+  "no": 4,
+  "varian": "C",
+  "teks_dihantar": "Untuk demo diip feik ni, kita guna rakaman simulasi.",
+  "whisper": "Untuk demo deepfake ini, kita guna rekaman simulasi.",
+  "saat": 4.4
+ },
+ {
+  "no": 5,
+  "varian": "A",
+  "teks_dihantar": "Sistem ni boleh dipercayai, telus dan berintegriti.",
+  "whisper": "Systèmes ni boleh diperkayai telus tan perintegriti.",
+  "saat": 4.4
+ },
+ {
+  "no": 5,
+  "varian": "B",
+  "teks_dihantar": "Sistem ni boleh dipercayai, telus dan berintegriti.",
+  "whisper": "Systèmes ni boleh diperkayai telus tan perintegriti.",
+  "saat": 4.4
+ },
+ {
+  "no": 5,
+  "varian": "C",
+  "teks_dihantar": "Sistem ni boleh dipercayai, telus dan berintegriti.",
+  "whisper": "Systèmes ni boleh diperkayai telus tan perintegriti.",
+  "saat": 4.4
+ },
+ {
+  "no": 6,
+  "varian": "A",
+  "teks_dihantar": "Bila fail sampai, sistem kira hash dan simpan dalam blockchain.",
+  "whisper": "Bila Fail Sanpai, System Kira Hash dan Simpan Dalam Blockchain.",
+  "saat": 4.8
+ },
+ {
+  "no": 6,
+  "varian": "B",
+  "teks_dihantar": "Bila fail sampai, sistem kira hesh dan simpan dalam blokcein.",
+  "whisper": "Bila fail sampai, systemkira hash dan simpan dalam blog sein.",
+  "saat": 4.9
+ },
+ {
+  "no": 6,
+  "varian": "C",
+  "teks_dihantar": "Bila fail sampai, sistem kira hesh dan simpan dalam blok cein.",
+  "whisper": "Bila Fail Sanpai, System Kira Hesh dan Simpan Dalam LogSign.",
+  "saat": 4.9
+ }
+]

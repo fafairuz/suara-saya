@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perakam Suara Saya</title>
+<style>
+:root{--bg:#f6f5f1;--kad:#fff;--teks:#1d1d1b;--lemah:#6b6a64;--garis:#e2e0d8;--aksen:#2f6f5e;--merah:#b3261e;--kuning:#a86b00;--hijau:#2e7d32}
+@media (prefers-color-scheme:dark){:root{--bg:#161614;--kad:#21211e;--teks:#ecebe6;--lemah:#9c9a92;--garis:#34332f;--aksen:#6cc3a8;--merah:#ff8a80;--kuning:#ffc35c;--hijau:#81c784}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--teks);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--garis)}
+header h1{font-size:16px;margin:0 12px 0 0}
+select,input,button{font:inherit;color:inherit;background:var(--kad);border:1px solid var(--garis);border-radius:8px;padding:6px 10px}
+button{cursor:pointer}
+button.utama{background:var(--aksen);color:var(--bg);border-color:var(--aksen)}
+#kemajuan{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--lemah)}
+.bar{height:4px;background:var(--garis)}.bar>div{height:100%;background:var(--aksen);width:0}
+main{max-width:860px;margin:0 auto;padding:24px 16px;display:grid;gap:16px}
+.kad{background:var(--kad);border:1px solid var(--garis);border-radius:14px;padding:24px}
+.atas{display:flex;justify-content:space-between;color:var(--lemah);font-size:14px}
+.lencana{display:inline-block;padding:2px 10px;border-radius:999px;border:1px solid var(--garis);font-size:13px;text-transform:uppercase;letter-spacing:.04em}
+.lencana.ayat{border-color:var(--aksen);color:var(--aksen)}
+#istilah{font-size:clamp(36px,8vw,64px);font-weight:700;line-height:1.1;margin:16px 0 4px;overflow-wrap:anywhere}
+#sebutan{font-size:20px;color:var(--aksen)}
+#baca{font-size:clamp(20px,3.5vw,28px);margin-top:20px;padding:16px;border-left:4px solid var(--aksen);background:var(--bg);border-radius:6px}
+#maksud{color:var(--lemah);margin-top:8px}
+#rakam{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+#titik{width:18px;height:18px;border-radius:50%;background:var(--garis)}
+#titik.on{background:var(--merah);animation:d 1s infinite}@keyframes d{50%{opacity:.35}}
+#meter{flex:1;min-width:160px;height:10px;background:var(--bg);border-radius:5px;overflow:hidden}
+#meter>div{height:100%;width:0;background:var(--hijau);transition:width .05s}
+#hasil{min-height:24px}
+.skor{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums}
+.amaran{color:var(--kuning);margin:4px 0}
+.ok{color:var(--hijau)}.teruk{color:var(--merah)}
+#ambilan{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+#ambilan button{font-size:13px}#ambilan button.pilih{border-color:var(--aksen);font-weight:700}
+.kekunci{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 16px;font-size:14px;color:var(--lemah)}
+kbd{font:12px ui-monospace,monospace;border:1px solid var(--garis);border-bottom-width:2px;border-radius:4px;padding:1px 6px;color:var(--teks);background:var(--kad)}
+details summary{cursor:pointer;font-weight:600}
+details li{margin:4px 0}
+</style>
+</head>
+<body>
+<header>
+  <h1>Perakam suara-saya</h1>
+  <label>Fail <select id="fail"></select></label>
+  <label>Gaya <select id="gaya"></select></label>
+  <button id="tambahGaya" title="Tambah gaya baru">+ gaya</button>
+  <span id="kemajuan"></span>
+</header>
+<div class="bar"><div id="barIsi"></div></div>
+<main>
+  <section class="kad">
+    <div class="atas"><span id="nombor"></span><span class="lencana" id="jenis"></span></div>
+    <div id="istilah"></div>
+    <div id="sebutan"></div>
+    <div id="baca"></div>
+    <div id="maksud"></div>
+  </section>
+  <section class="kad">
+    <div id="rakam">
+      <div id="titik"></div>
+      <button class="utama" id="bRakam">Rakam (space)</button>
+      <div id="meter"><div></div></div>
+      <button id="bMain" disabled>Main (p)</button>
+      <button id="bSimpan" disabled>Simpan + seterusnya (enter)</button>
+    </div>
+    <div id="hasil"></div>
+    <div id="ambilan"></div>
+  </section>
+  <section class="kad kekunci">
+    <span><kbd>space</kbd> mula / henti rakam</span>
+    <span><kbd>enter</kbd> simpan, item seterusnya</span>
+    <span><kbd>r</kbd> rakam semula</span>
+    <span><kbd>p</kbd> main semula</span>
+    <span><kbd>←</kbd> <kbd>→</kbd> item sebelum / selepas</span>
+    <span><kbd>n</kbd> item belum siap seterusnya</span>
+  </section>
+  <section class="kad">
+    <details open>
+      <summary>Arahan rakaman</summary>
+      <ul>
+        <li><b>Mikrofon:</b> 15–20 cm dari mulut, sedikit ke tepi supaya hembusan "p"/"b" tak kena terus. Jarak sama setiap sesi.</li>
+        <li><b>Bilik:</b> senyap dan "mati" (langsir, almari baju, tilam). Matikan kipas dan aircond. Telefon mod senyap.</li>
+        <li><b>Minum air</b> sebelum mula dan setiap 10–15 minit. Elak susu dan kopi sejurus sebelum rakam.</li>
+        <li><b>Perkataan sahaja (KATA):</b> sebut istilah sekali, jelas, nada biasa. <b>Dalam ayat (AYAT):</b> baca ayat penuh macam beri taklimat.</li>
+        <li><b>Gaya:</b> <i>santai</i> = taklimat biasa; <i>tegas</i> = yakin, jelas, sedikit perlahan; <i>tanya</i> = intonasi soalan. Satu gaya satu sesi.</li>
+        <li>Tunggu sesaat selepas tekan space sebelum mula cakap, dan sesaat lagi sebelum henti.</li>
+        <li>Skor whisper rendah untuk satu perkataan English selalunya salah dengar whisper, bukan salah sebut. Dengar sendiri (<kbd>p</kbd>).</li>
+      </ul>
+    </details>
+  </section>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+let S = {fail: '', gaya: 'santai', item: [], i: 0, draf: null, merakam: false, audio: null};
+let ctx, strm, node, chunks = [], sr = 48000;
+
+async function api(u, o) { const r = await fetch(u, o); const j = await r.json(); if (!r.ok) throw new Error(j.ralat || r.status); return j; }
+const kunciSimpan = () => 'suara-i:' + S.fail + ':' + S.gaya;
+
+async function mula() {
+  const m = await api('/api/mula');
+  $('#fail').innerHTML = m.fail.map(f => `<option value="${f}">${f.split('/').pop()}</option>`).join('');
+  S.fail = m.fail_lalai; $('#fail').value = S.fail;
+  isiGaya(m.gaya); await muatItem(true);
+}
+function isiGaya(g) { $('#gaya').innerHTML = g.map(x => `<option>${x}</option>`).join(''); $('#gaya').value = S.gaya; }
+
+async function muatItem(sambung) {
+  const r = await api(`/api/item?fail=${encodeURIComponent(S.fail)}&gaya=${encodeURIComponent(S.gaya)}`);
+  S.item = r.item; kemajuan(r.kemajuan);
+  if (sambung) {
+    let simpan = null; try { simpan = localStorage.getItem(kunciSimpan()); } catch (e) {}
+    const belum = S.item.findIndex(x => !x.siap);
+    S.i = simpan !== null && +simpan < S.item.length ? +simpan : (belum >= 0 ? belum : 0);
+  }
+  papar();
+}
+function kemajuan(k) {
+  $('#kemajuan').textContent = k.label + ` (${k.item_siap}/${k.item_jumlah} item)`;
+  $('#barIsi').style.width = (100 * k.item_siap / Math.max(1, k.item_jumlah)) + '%';
+}
+function papar() {
+  const it = S.item[S.i]; if (!it) return;
+  try { localStorage.setItem(kunciSimpan(), S.i); } catch (e) {}
+  $('#nombor').textContent = `Item ${S.i + 1}/${S.item.length}` + (it.siap ? ' · ✓ siap' : '');
+  $('#jenis').textContent = it.jenis === 'kata' ? 'perkataan sahaja' : 'dalam ayat';
+  $('#jenis').className = 'lencana ' + it.jenis;
+  $('#istilah').textContent = it.jenis === 'kata' || !it.sebutan ? it.istilah : it.istilah;
+  $('#sebutan').textContent = it.sebutan ? 'sebutan: ' + it.sebutan : '';
+  $('#baca').textContent = it.jenis === 'kata' ? 'Sebut: ' + it.teks : it.teks;
+  $('#maksud').textContent = it.maksud || '';
+  if (it.jenis === 'ayat' && it.istilah === it.teks) $('#istilah').textContent = '';
+  S.draf = null; $('#hasil').innerHTML = ''; $('#bSimpan').disabled = true; $('#bMain').disabled = !it.ambilan.length;
+  $('#ambilan').innerHTML = it.ambilan.map(a =>
+    `<button data-f="${a.fail}" class="${a.pilihan ? 'pilih' : ''}" title="klik main; shift-klik jadikan pilihan">#${a.ambilan} ${a.skor != null ? Math.round(a.skor * 100) + '%' : ''} ${a.tempoh}s${a.pilihan ? ' ★' : ''}</button>`).join('');
+}
+
+async function sediaMic() {
+  if (ctx) return;
+  strm = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1}});
+  ctx = new AudioContext(); sr = ctx.sampleRate;
+  const kod = `class P extends AudioWorkletProcessor{process(i){const c=i[0][0];if(c)this.port.postMessage(c.slice(0));return true}}registerProcessor('p',P)`;
+  await ctx.audioWorklet.addModule(URL.createObjectURL(new Blob([kod], {type: 'application/javascript'})));
+  node = new AudioWorkletNode(ctx, 'p');
+  node.port.onmessage = e => {
+    const c = e.data; let pk = 0; for (let k = 0; k < c.length; k++) pk = Math.max(pk, Math.abs(c[k]));
+    $('#meter>div').style.width = Math.min(100, 100 * pk) + '%';
+    $('#meter>div').style.background = pk > 0.98 ? 'var(--merah)' : pk > 0.7 ? 'var(--kuning)' : 'var(--hijau)';
+    if (S.merakam) chunks.push(c);
+  };
+  ctx.createMediaStreamSource(strm).connect(node);
+}
+async function togolRakam() {
+  if (S.merakam) return henti();
+  try { await sediaMic(); } catch (e) { $('#hasil').innerHTML = `<p class="teruk">Mikrofon tak dapat dibuka: ${e.message}</p>`; return; }
+  await ctx.resume(); chunks = []; S.merakam = true; S.draf = null;
+  $('#titik').classList.add('on'); $('#bRakam').textContent = 'Henti (space)'; $('#hasil').innerHTML = 'Merakam…'; $('#bSimpan').disabled = true;
+}
+async function henti() {
+  S.merakam = false; $('#titik').classList.remove('on'); $('#bRakam').textContent = 'Rakam (space)';
+  const n = chunks.reduce((a, c) => a + c.length, 0), x = new Float32Array(n); let o = 0; for (const c of chunks) { x.set(c, o); o += c.length; }
+  if (n < sr * 0.2) { $('#hasil').innerHTML = '<p class="amaran">Terlalu pendek.</p>'; return; }
+  $('#hasil').innerHTML = 'Potong senyap, semak aras dan whisper…';
+  try {
+    const r = await api(`/api/rakaman?fail=${encodeURIComponent(S.fail)}&indeks=${S.i}&sr=${sr}`, {method: 'POST', body: x.buffer});
+    S.draf = r; tunjukHasil(r); $('#bSimpan').disabled = false; $('#bMain').disabled = false;
+  } catch (e) { $('#hasil').innerHTML = `<p class="teruk">Ralat: ${e.message}</p>`; }
+}
+function tunjukHasil(r) {
+  const k = r.skor_whisper >= 0.9 ? 'ok' : r.skor_whisper >= 0.8 ? '' : 'teruk';
+  $('#hasil').innerHTML = `<p><span class="skor ${k}">${Math.round(r.skor_whisper * 100)}%</span> &nbsp; ${r.tempoh} s · puncak ${r.puncak_db} dBFS · aras ${r.rms_db} dBFS · latar ${r.lantai_db} dBFS</p>
+    <p>Whisper dengar: <i>${r.didengar || '(tiada)'}</i></p>` + r.amaran.map(a => `<p class="amaran">⚠ ${a}</p>`).join('') + (r.amaran.length ? '' : '<p class="ok">✓ Aras baik</p>');
+}
+function main(f) {
+  const it = S.item[S.i]; if (S.audio) S.audio.pause();
+  f = f || (S.draf ? 'kerja/draf/' + S.draf.draf + '.flac' : (it.ambilan.find(a => a.pilihan) || it.ambilan[it.ambilan.length - 1] || {}).fail && 'bank/' + (it.ambilan.find(a => a.pilihan) || it.ambilan[it.ambilan.length - 1]).fail);
+  if (!f) return; S.audio = new Audio('/audio?f=' + encodeURIComponent(f)); S.audio.play();
+}
+async function simpan() {
+  if (!S.draf || S.merakam) return;
+  const it = S.item[S.i];
+  await api('/api/simpan', {method: 'POST', body: JSON.stringify({fail: S.fail, indeks: S.i, gaya: S.gaya, draf: S.draf.draf, meta: S.draf})});
+  S.i = Math.min(S.i + 1, S.item.length - 1); await muatItem(false);
+}
+function pergi(d) { if (S.merakam) return; S.i = Math.max(0, Math.min(S.item.length - 1, S.i + d)); papar(); }
+
+$('#bRakam').onclick = togolRakam; $('#bSimpan').onclick = simpan; $('#bMain').onclick = () => main();
+$('#ambilan').onclick = async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (e.shiftKey) { await api('/api/pilih', {method: 'POST', body: JSON.stringify({fail: b.dataset.f})}); await muatItem(false); }
+  else main('bank/' + b.dataset.f);
+};
+$('#fail').onchange = e => { S.fail = e.target.value; muatItem(true); };
+$('#gaya').onchange = e => { S.gaya = e.target.value; muatItem(true); };
+$('#tambahGaya').onclick = async () => {
+  const n = prompt('Nama gaya baru (contoh: cerita, serius):'); if (!n) return;
+  const r = await api('/api/gaya', {method: 'POST', body: JSON.stringify({nama: n})}); S.gaya = r.baru; isiGaya(r.gaya); muatItem(true);
+};
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input,select,textarea') || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.code === 'Space') { e.preventDefault(); togolRakam(); }
+  else if (e.key === 'Enter') { e.preventDefault(); simpan(); }
+  else if (e.key === 'r') { if (!S.merakam) { S.draf = null; togolRakam(); } }
+  else if (e.key === 'p') main();
+  else if (e.key === 'ArrowRight') pergi(1);
+  else if (e.key === 'ArrowLeft') pergi(-1);
+  else if (e.key === 'n') { const j = S.item.findIndex((x, k) => k > S.i && !x.siap); if (j >= 0) { S.i = j; papar(); } }
+});
+mula().catch(e => $('#hasil').textContent = 'Ralat: ' + e.message);
+</script>
+</body>
+</html>

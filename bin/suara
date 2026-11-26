@@ -1,0 +1,5 @@
+#!/bin/sh
+# suara-saya: bin/suara jana|cakap|rakam|semak ...   (lihat README.md)
+D=$(cd "$(dirname "$0")/.." && pwd)
+[ -x "$D/.venv/bin/python" ] || { echo "suara-saya belum dipasang: sh $D/pasang.sh" >&2; exit 1; }
+PYTHONPATH="$D" exec "$D/.venv/bin/python" -m suara "$@"

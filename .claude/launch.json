@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {"name": "perakam", "runtimeExecutable": "/Volumes/opt/claude/suara-saya/bin/suara", "runtimeArgs": ["rakam", "--tanpa-buka", "--port", "8765"], "port": 8765}
+  ]
+}
