@@ -8,6 +8,7 @@ from .dengar import whisper, skor_terbaik
 from .bank import rujukan
 
 MIN_SKOR = 0.85
+TETAPAN = dict(cfg=0.5, ex=0.5, suhu=0.7)      # lalai enjin (cfg_weight, exaggeration, temperature)
 
 
 def log(*a):
@@ -20,23 +21,33 @@ class Enjin:
         from .model import muat
         self.torch = torch; self.gaya = gaya; self.istilah = istilah
         t0 = time.time(); self.m = muat()
-        self.ruj, self.ket = rujukan(gaya)
-        self.m.prepare_conditionals(str(self.ruj), exaggeration=0.5)
+        self._conds = {}; self.guna(gaya)
         self.boleh_semak = bool(shutil.which('whisper-cli')) and os.path.exists(WHISPER_MODEL)
         if not self.boleh_semak: log('  (whisper-cli atau modelnya tiada: semakan dan cuba semula dimatikan)')
         log(f'  suara-saya {VERSI}: model dimuat {time.time() - t0:.0f} s, gaya {gaya} ({self.ket})')
+
+    def guna(self, gaya, ex=None, ruj=None):
+        """tetapkan klip rujukan (ikut gaya, atau laluan ruj) dan exaggeration; conds disimpan dalam cache"""
+        ex = TETAPAN['ex'] if ex is None else float(ex)
+        if ruj: self.ruj, self.ket = Path(ruj), f'tetap: {ruj}'
+        else: self.ruj, self.ket = rujukan(gaya)
+        self.gaya = gaya; k = (str(self.ruj), self.ruj.stat().st_mtime, ex)
+        if k not in self._conds:
+            self.m.prepare_conditionals(str(self.ruj), exaggeration=ex); self._conds[k] = self.m.conds
+        self.m.conds = self._conds[k]; self.ex = ex
 
     @property
     def sr(self):
         return self.m.sr
 
-    def satu(self, teks, benih=7, lang='ms', cuba=3, semak=True):
+    def satu(self, teks, benih=7, lang='ms', cuba=3, semak=True, cfg=None, suhu=None):
         """jana satu ayat; semak dengan whisper dan cuba semula dengan benih lain. Pulang (wav, teks_dihantar, skor, didengar, benih)"""
         dihantar = tukar(teks, self.istilah); terbaik = None; semak = semak and self.boleh_semak
+        cfg = TETAPAN['cfg'] if cfg is None else float(cfg); suhu = TETAPAN['suhu'] if suhu is None else float(suhu)
         for k in range(cuba if semak else 1):
             b = int(benih) + 1000 * k
             self.torch.manual_seed(b)
-            w = self.m.generate(dihantar, language_id=lang, cfg_weight=0.5, exaggeration=0.5, temperature=0.7).squeeze(0).numpy()
+            w = self.m.generate(dihantar, language_id=lang, cfg_weight=cfg, exaggeration=self.ex, temperature=suhu).squeeze(0).numpy()
             if not semak: return w, dihantar, None, None, b
             import tempfile, soundfile as sf, os
             with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f: sf.write(f.name, w, self.sr)

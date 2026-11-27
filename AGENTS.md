@@ -114,6 +114,7 @@ Field notes:
 | `suara/bank.py` | Reads and writes `bank/manifest.json`; picks the reference clip for each style. |
 | `suara/dengar.py` | `whisper-cli` wrapper and fuzzy word-match score. |
 | `suara/rakam.py`, `suara/rakam.html` | Recorder web app, bound to 127.0.0.1 only. It takes raw float32 PCM from the browser and saves FLAC at 48 kHz mono, 16-bit. |
+| `suara/uji.py`, `suara/uji.html` | Test portal at `/uji` on the same server. It holds a lazily loaded `Enjin`, compares setting presets (`PRASET`), gives random sentences from the CSVs and scripts or fills templates (no AI), and logs ratings to `kerja/uji/log.jsonl`. |
 | `ujian/ab_sebutan.py` | The A/B test behind the pronunciation decision. |
 
 ### Decisions already made (do not reverse without asking the user)
@@ -132,7 +133,7 @@ sh pasang.sh                                   # venv + model + check
 bin/suara semak                                # install check (fast, no model load)
 bin/suara sebut "Data PII 12.5% ke MBI"        # test the pronunciation layer instantly
 bin/suara cakap "…" -o /tmp/x.wav              # end-to-end test (~30–60 s)
-bin/suara rakam --tanpa-buka                   # recorder on http://127.0.0.1:8765
+bin/suara rakam --tanpa-buka                   # recorder on http://127.0.0.1:8765, test portal on /uji
 ```
 
 There is no unit-test suite yet. For changes to `sebutan.py`, check them with `bin/suara sebut` on a few sentences with acronyms, numbers and clitics (`LLM-nya`).

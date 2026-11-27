@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portal Uji Suara</title>
+<style>
+:root{--bg:#f6f5f1;--kad:#fff;--teks:#1d1d1b;--lemah:#6b6a64;--garis:#e2e0d8;--aksen:#2f6f5e;--merah:#b3261e;--kuning:#a86b00;--hijau:#2e7d32}
+@media (prefers-color-scheme:dark){:root{--bg:#161614;--kad:#21211e;--teks:#ecebe6;--lemah:#9c9a92;--garis:#34332f;--aksen:#6cc3a8;--merah:#ff8a80;--kuning:#ffc35c;--hijau:#81c784}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--teks);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--garis)}
+header h1{font-size:16px;margin:0}
+header a{color:var(--aksen);margin-left:auto}
+main{max-width:900px;margin:0 auto;padding:24px 16px;display:grid;gap:16px}
+.kad{background:var(--kad);border:1px solid var(--garis);border-radius:14px;padding:20px}
+h2{font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--lemah);margin:0 0 10px}
+textarea,select,input,button{font:inherit;color:inherit;background:var(--kad);border:1px solid var(--garis);border-radius:8px;padding:6px 10px}
+textarea{width:100%;min-height:96px;font-size:20px;resize:vertical;background:var(--bg)}
+button{cursor:pointer}button:disabled{opacity:.5;cursor:default}
+button.utama{background:var(--aksen);color:var(--bg);border-color:var(--aksen);font-weight:600;padding:8px 18px}
+.baris{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:10px}
+#dihantar{margin-top:10px;color:var(--lemah);font-size:14px}#dihantar b{color:var(--aksen);font-weight:500}
+.praset{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:10px}
+.praset label{border:1px solid var(--garis);border-radius:10px;padding:8px 10px;display:flex;gap:8px;align-items:flex-start;cursor:pointer}
+.praset small{display:block;color:var(--lemah)}
+#sendiri{display:none;gap:16px;flex-wrap:wrap;margin-top:8px}#sendiri label{display:flex;gap:6px;align-items:center;font-size:14px}
+#sendiri input[type=range]{width:120px}
+#status{color:var(--lemah)}
+.hasil{border:1px solid var(--garis);border-radius:12px;padding:14px;margin-top:12px}
+.hasil .atas{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline}
+.hasil .nama{font-weight:700}.hasil .param{color:var(--lemah);font-size:13px}
+.skor{font-weight:700;font-variant-numeric:tabular-nums}.ok{color:var(--hijau)}.teruk{color:var(--merah)}.sederhana{color:var(--kuning)}
+audio{width:100%;margin:10px 0 4px}
+.ayat{font-size:14px;margin:4px 0;color:var(--lemah)}.ayat i{color:var(--teks)}
+.nilai{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.nilai input{flex:1;min-width:160px}
+.nilai button.pilih{border-color:var(--aksen);background:var(--aksen);color:var(--bg)}
+details summary{cursor:pointer;color:var(--lemah)}
+.nota{font-size:13px;color:var(--lemah)}
+</style>
+</head>
+<body>
+<header><h1>Portal uji suara-saya</h1><span class="nota">semua tempatan · model kekal dalam memori selepas jana pertama</span><a href="/">← Perakam</a></header>
+<main>
+  <section class="kad">
+    <h2>Ayat</h2>
+    <textarea id="teks" placeholder="Taip ayat BM bercampur English…">Jadi data sensitif tak keluar langsung dari rangkaian agensi.</textarea>
+    <div class="baris">
+      <button id="bRawak" title="Ambil ayat dari CSV dan skrip sedia ada">Ayat rawak</button>
+      <button id="bTemplat" title="Ayat templat BM diisi istilah rawak dari CSV (bukan AI)">Templat rawak</button>
+      <span class="nota">Ayat rawak diambil dari CSV/skrip; templat diisi istilah dari CSV. Tiada AI.</span>
+    </div>
+    <div id="dihantar"></div>
+  </section>
+  <section class="kad">
+    <h2>Tetapan</h2>
+    <div class="baris">
+      <label>Gaya <select id="gaya"></select></label>
+      <label>Rujukan <select id="rujukan"></select></label>
+      <label>Benih <input id="benih" type="number" value="7" style="width:90px"></label>
+      <label><input id="semak" type="checkbox" checked> semak whisper + cuba semula</label>
+    </div>
+    <div class="praset" id="praset"></div>
+    <div id="sendiri">
+      <label>cfg <input id="cfg" type="range" min="0" max="1" step="0.05" value="0.4"><span></span></label>
+      <label>exaggeration <input id="ex" type="range" min="0.1" max="1.5" step="0.05" value="0.5"><span></span></label>
+      <label>suhu <input id="suhu" type="range" min="0.1" max="1.2" step="0.05" value="0.6"><span></span></label>
+    </div>
+    <div class="baris">
+      <button class="utama" id="bJana">Jana (⌘/ctrl + enter)</button>
+      <span id="status"></span>
+    </div>
+  </section>
+  <section class="kad" id="kadHasil" hidden>
+    <h2>Hasil</h2>
+    <div id="hasil"></div>
+  </section>
+  <section class="kad">
+    <details id="dSejarah"><summary>Sejarah ujian (dengan nilai)</summary><div id="sejarah"></div></details>
+  </section>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+async function api(u, o) { const r = await fetch(u, o); const j = await r.json(); if (!r.ok) throw new Error(j.ralat || r.status); return j; }
+let PRASET = [];
+
+async function mula() {
+  const m = await api('/api/uji/mula'); PRASET = m.praset;
+  $('#gaya').innerHTML = m.gaya.map(g => `<option>${esc(g)}</option>`).join('');
+  $('#rujukan').innerHTML = m.rujukan.map(r => `<option value="${esc(r.nilai)}">${esc(r.label)}</option>`).join('');
+  $('#praset').innerHTML = m.praset.map((p, i) => `<label><input type="checkbox" value="${i}" ${p.nama === 'semasa' || p.nama === 'varian3' ? 'checked' : ''}>
+      <span><b>${esc(p.nama)}</b><small>cfg ${p.cfg} · ex ${p.ex} · suhu ${p.suhu}<br>${esc(p.ket)}</small></span></label>`).join('')
+    + `<label><input type="checkbox" value="sendiri" id="cSendiri"><span><b>sendiri</b><small>laras cfg, exaggeration, suhu</small></span></label>`;
+  $('#cSendiri').onchange = e => $('#sendiri').style.display = e.target.checked ? 'flex' : 'none';
+  if (!m.model_dimuat) $('#status').textContent = 'Jana pertama memuat model (~20 s).';
+  sejarah(m.sejarah); sebut();
+}
+document.querySelectorAll('#sendiri input').forEach(i => { const u = () => i.nextElementSibling.textContent = i.value; i.oninput = u; u(); });
+
+let tSebut;
+function sebut() {
+  clearTimeout(tSebut);
+  tSebut = setTimeout(async () => {
+    const t = $('#teks').value.trim(); if (!t) { $('#dihantar').innerHTML = ''; return; }
+    const r = await api('/api/uji/sebut?teks=' + encodeURIComponent(t));
+    $('#dihantar').innerHTML = 'Model akan baca: <b>' + esc(r.teks_dihantar) + '</b>';
+  }, 250);
+}
+$('#teks').oninput = sebut;
+async function rawak(mod) { const r = await api('/api/uji/rawak?mod=' + mod); $('#teks').value = r.teks; sebut(); }
+$('#bRawak').onclick = () => rawak('ayat'); $('#bTemplat').onclick = () => rawak('templat');
+
+function kelas(s) { return s == null ? '' : s >= 0.9 ? 'ok' : s >= 0.8 ? 'sederhana' : 'teruk'; }
+function kadHasil(r, kecil) {
+  return `<div class="hasil" data-id="${r.id}">
+    <div class="atas"><span class="nama">${esc(r.praset)}</span>
+      <span class="param">cfg ${r.cfg} · ex ${r.ex} · suhu ${r.suhu} · ${esc(r.gaya)} · ${esc(r.rujukan)}</span>
+      <span class="skor ${kelas(r.skor)}">${r.skor == null ? '' : Math.round(r.skor * 100) + '%'}</span>
+      <span class="param">${r.tempoh} s audio · ${r.masa_jana ?? '?'} s jana${kecil ? ' · ' + esc(r.tarikh) : ''}</span></div>
+    ${kecil ? `<div class="ayat"><i>${esc(r.teks)}</i></div>` : ''}
+    <audio controls preload="none" src="/audio?f=${encodeURIComponent(r.fail)}"></audio>
+    ${kecil ? '' : r.ayat.map(a => `<div class="ayat">Model baca: <i>${esc(a.teks_dihantar)}</i>${a.didengar != null ? ` → whisper dengar: <i>${esc(a.didengar)}</i> <span class="skor ${kelas(a.skor)}">${Math.round(a.skor * 100)}%</span>` : ''}${a.benih != 7 ? ` (benih ${a.benih})` : ''}</div>`).join('')}
+    <div class="nilai"><button data-n="bagus" class="${r.nilai === 'bagus' ? 'pilih' : ''}">👍 Bagus</button><button data-n="buruk" class="${r.nilai === 'buruk' ? 'pilih' : ''}">👎 Buruk</button>
+      <input placeholder="nota (cth: 'jadi' bunyi 'jady')" value="${esc(r.nota || '')}"></div></div>`;
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('.nilai button'); if (!b) return;
+  const k = b.closest('.hasil');
+  await api('/api/uji/nilai', {method: 'POST', body: JSON.stringify({id: k.dataset.id, nilai: b.dataset.n, nota: k.querySelector('.nilai input').value})});
+  k.querySelectorAll('.nilai button').forEach(x => x.classList.toggle('pilih', x === b));
+});
+function sejarah(s) { $('#sejarah').innerHTML = s.length ? s.map(r => kadHasil(r, true)).join('') : '<p class="nota">Belum ada.</p>'; }
+
+async function jana() {
+  const teks = $('#teks').value.trim(); if (!teks) return;
+  const pilih = [...document.querySelectorAll('#praset input:checked')].map(i => i.value === 'sendiri'
+    ? {nama: 'sendiri', cfg: +$('#cfg').value, ex: +$('#ex').value, suhu: +$('#suhu').value} : PRASET[+i.value]);
+  if (!pilih.length) { $('#status').textContent = 'Pilih sekurang-kurangnya satu tetapan.'; return; }
+  $('#bJana').disabled = true; const t0 = Date.now();
+  const jam = setInterval(() => $('#status').textContent = `Menjana ${pilih.length} versi… ${Math.round((Date.now() - t0) / 1000)} s`, 500);
+  try {
+    const r = await api('/api/uji/jana', {method: 'POST', body: JSON.stringify({teks, gaya: $('#gaya').value, rujukan: $('#rujukan').value,
+      benih: +$('#benih').value, semak: $('#semak').checked, praset: pilih})});
+    $('#kadHasil').hidden = false; $('#hasil').innerHTML = r.hasil.map(x => kadHasil(x, false)).join('');
+    $('#status').textContent = `Siap dalam ${Math.round((Date.now() - t0) / 1000)} s` + (r.muat_model_s > 2 ? ` (termasuk muat model ${r.muat_model_s} s)` : '') + '. Dengar, kemudian nilai.';
+    const m = await api('/api/uji/mula'); sejarah(m.sejarah);
+  } catch (e) { $('#status').textContent = 'Ralat: ' + e.message; }
+  clearInterval(jam); $('#bJana').disabled = false;
+}
+$('#bJana').onclick = jana;
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); jana(); } });
+mula().catch(e => $('#status').textContent = 'Ralat: ' + e.message);
+</script>
+</body>
+</html>

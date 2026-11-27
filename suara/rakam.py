@@ -135,6 +135,14 @@ class H(BaseHTTPRequestHandler):
     def do_GET(self):
         p, q = self.q()
         try:
+            if p == '/uji':
+                return self.hantar(200, (Path(__file__).parent / 'uji.html').read_bytes(), 'text/html; charset=utf-8')
+            if p == '/api/uji/mula':
+                from . import uji; return self.hantar(200, uji.mula())
+            if p == '/api/uji/rawak':
+                from . import uji; return self.hantar(200, dict(teks=uji.ayat_rawak(q.get('mod', 'ayat'))))
+            if p == '/api/uji/sebut':
+                from . import uji; return self.hantar(200, uji.sebut(q.get('teks', '')))
             if p == '/':
                 return self.hantar(200, (Path(__file__).parent / 'rakam.html').read_bytes(), 'text/html; charset=utf-8')
             if p == '/api/mula':
@@ -143,7 +151,7 @@ class H(BaseHTTPRequestHandler):
                 return self.hantar(200, status(q.get('fail', self.fail_lalai), q.get('gaya', 'santai')))
             if p == '/audio':
                 f = (D / q['f']).resolve()
-                if not (f.is_relative_to(BANK) or f.is_relative_to(DRAF)) or not f.exists(): return self.hantar(404, {'ralat': 'tiada'})
+                if not (f.is_relative_to(BANK) or f.is_relative_to(DRAF) or f.is_relative_to(KERJA / 'uji') or f.is_relative_to(D / 'rujukan')) or not f.exists(): return self.hantar(404, {'ralat': 'tiada'})
                 return self.hantar(200, f.read_bytes(), 'audio/flac')
             self.hantar(404, {'ralat': 'tiada'})
         except Exception as e:
@@ -180,6 +188,10 @@ class H(BaseHTTPRequestHandler):
                         if (a['slug'], a['gaya'], a['jenis']) == (sasar['slug'], sasar['gaya'], sasar['jenis']): a['pilihan'] = a is sasar
                     tulis(M)
                 return self.hantar(200, {'ok': True})
+            if p == '/api/uji/jana':
+                from . import uji; return self.hantar(200, uji.jana(json.loads(badan)))
+            if p == '/api/uji/nilai':
+                from . import uji; return self.hantar(200, uji.nilai(json.loads(badan)))
             if p == '/api/gaya':
                 n = slug(json.loads(badan)['nama'])
                 if not n: return self.hantar(400, {'ralat': 'nama kosong'})
@@ -196,7 +208,7 @@ def jalan(port, fail, buka=True):
     H.fail_lalai = str(Path(fail).resolve())
     s = ThreadingHTTPServer(('127.0.0.1', port), H)
     url = f'http://127.0.0.1:{port}/'
-    print(f'Perakam suara-saya: {url}  (localhost sahaja; Ctrl-C untuk henti)', flush=True)
+    print(f'Perakam suara-saya: {url}   portal uji: {url}uji   (localhost sahaja; Ctrl-C untuk henti)', flush=True)
     if buka: threading.Timer(0.5, lambda: webbrowser.open(url)).start()
     try:
         s.serve_forever()

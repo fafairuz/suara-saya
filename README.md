@@ -193,6 +193,26 @@ Selepas setiap rakaman, perakam buat empat perkara secara automatik:
 
 Fail disimpan sebagai `bank/<istilah>/<gaya>-<kata|ayat>-NN.flac` (48 kHz mono). Ambilan lama tak dipadam. Semua ambilan direkod dalam `bank/manifest.json`.
 
+## Portal uji
+
+```bash
+bin/suara rakam      # kemudian buka http://127.0.0.1:8765/uji (atau klik "Portal uji →" dalam perakam)
+```
+
+Halaman untuk mencuba suara tanpa terminal:
+
+- **Ayat:** taip sendiri, atau tekan butang *Ayat rawak* atau *Templat rawak*.
+  - *Ayat rawak* ambil ayat dari CSV dan skrip sedia ada.
+  - *Templat rawak* isi ayat corak BM dengan istilah rawak dari CSV.
+  - Kedua-duanya tak guna AI. Semuanya tempatan.
+- **Model akan baca:** teks selepas lapisan sebutan dipapar serta-merta semasa menaip.
+- **Tetapan:** pilih gaya, klip rujukan (auto, atau ambilan tertentu dari bank), dan benih.
+  Tandakan satu atau lebih praset (`semasa`, `varian3`, `cfg0`, `tenang`, atau `sendiri` dengan peluncur) untuk dibanding sebelah-menyebelah.
+- **Hasil:** pemain audio, apa yang whisper dengar, dan skor untuk setiap versi. Nilai dengan 👍 / 👎 dan nota.
+  Sejarah dan nilai disimpan dalam `kerja/uji/log.jsonl` (tempatan, tak masuk git).
+
+Model dimuat sekali (kira-kira 20 s) pada jana pertama, dan kekal dalam memori pelayan selagi `bin/suara rakam` berjalan.
+
 ## Had yang diketahui
 
 - **Skor whisper bukan telinga.** Whisper memadankan perkataan yang hampir sama, jadi dengar sendiri sebelum terbitkan.
