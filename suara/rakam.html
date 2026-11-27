@@ -54,7 +54,6 @@ dialog input:not([type=checkbox]){width:100%}
   <button id="tambahPersona" title="Tambah persona (suara orang lain, dengan izin dia)">+ persona</button>
   <label>Fail <select id="fail"></select></label>
   <label>Gaya <select id="gaya"></select></label>
-  <button id="tambahGaya" title="Tambah gaya baru">+ gaya</button>
   <span id="kemajuan"></span>
   <a href="/uji" style="color:var(--aksen)">Portal uji →</a>
 </header>
@@ -234,10 +233,6 @@ $('#pCipta').onclick = async e => {
 };
 $('#fail').onchange = e => { S.fail = e.target.value; muatItem(true); };
 $('#gaya').onchange = e => { S.gaya = e.target.value; muatItem(true); };
-$('#tambahGaya').onclick = async () => {
-  const n = prompt('Nama gaya baru (contoh: cerita, serius):'); if (!n) return;
-  const r = await api('/api/gaya', {method: 'POST', body: JSON.stringify({persona: S.persona, nama: n})}); S.gaya = r.baru; isiGaya(r.gaya); muatItem(true);
-};
 document.addEventListener('keydown', e => {
   if (e.target.matches('input,select,textarea') || e.metaKey || e.ctrlKey || e.altKey) return;
   if (e.code === 'Space') { e.preventDefault(); togolRakam(); }
