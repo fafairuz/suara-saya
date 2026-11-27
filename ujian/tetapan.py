@@ -14,10 +14,10 @@ AYAT = ["Jadi data sensitif tak keluar langsung dari rangkaian agensi.",
         "Sistem ni boleh dipercayai, cuma kena jaga betul-betul."]
 S2 = '/Volumes/opt/claude/video-template/tts/rujukan/rujukan-s2.wav'
 VARIAN = [   # nama, rujukan, cfg_weight, exaggeration, temperature
-    ('1-semasa', R / 'rujukan/santai.flac', 0.5, 0.5, 0.7),
-    ('2-cfg0', R / 'rujukan/santai.flac', 0.0, 0.5, 0.7),
-    ('3-cfg03-suhu05', R / 'rujukan/santai.flac', 0.3, 0.5, 0.5),
-    ('4-tenang', R / 'rujukan/santai.flac', 0.5, 0.3, 0.5),
+    ('1-semasa', R / 'persona/fairuz/rujukan/santai.flac', 0.5, 0.5, 0.7),
+    ('2-cfg0', R / 'persona/fairuz/rujukan/santai.flac', 0.0, 0.5, 0.7),
+    ('3-cfg03-suhu05', R / 'persona/fairuz/rujukan/santai.flac', 0.3, 0.5, 0.5),
+    ('4-tenang', R / 'persona/fairuz/rujukan/santai.flac', 0.5, 0.3, 0.5),
     ('5-rujukan-s2', Path(S2), 0.5, 0.5, 0.7),
     ('6-rujukan-s2-cfg0', Path(S2), 0.0, 0.5, 0.7),
 ]

@@ -5,8 +5,9 @@ from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
 import numpy as np, soundfile as sf
-from . import D, BANK, GAYA, KERJA, ISTILAH
-from .bank import slug, baca, tambah, ambilan_seterusnya
+from . import D, KERJA, ISTILAH
+from .bank import slug, baca, tambah, ambilan_seterusnya, pilih
+from .persona import dapat, senarai as senarai_persona, lalai as persona_lalai, cipta, PERSONA, ATURAN
 from .dengar import whisper, skor_terbaik
 from .sebutan import tukar
 
@@ -48,26 +49,27 @@ def item(fail):
     return out
 
 
-def status(fail, gaya):
-    its = item(fail); A = baca()['ambilan']
+def status(fail, gaya, persona=None):
+    P = dapat(persona); its = [dict(i) for i in item(fail)]; A = baca(P)['ambilan']
     ada = {}
     for a in A:
         if a['gaya'] == gaya: ada.setdefault((a['slug'], a['jenis']), []).append(a)
     for i in its:
         tk = ada.get((i['slug'], i['jenis']), [])
         if i['jenis'] == 'ayat': tk = [a for a in tk if a['teks'] == i['teks']]   # istilah sama dalam CSV lain, ayat lain
-        i['ambilan'] = [dict(fail=a['fail'], ambilan=a['ambilan'], skor=a.get('skor_whisper'), pilihan=a.get('pilihan'), tempoh=a['tempoh'])
+        i['ambilan'] = [dict(fail=a['fail'], url=P.rel(P.bank / a['fail']), ambilan=a['ambilan'], skor=a.get('skor_whisper'), pilihan=a.get('pilihan'), tempoh=a['tempoh'])
                         for a in tk]
         i['siap'] = any(a.get('pilihan') for a in tk)
     istilah = {}
     for i in its: istilah.setdefault(i['slug'], []).append(i['siap'])
     siap = sum(all(v) for v in istilah.values())
     return dict(item=its, kemajuan=dict(siap=siap, jumlah=len(istilah), item_siap=sum(i['siap'] for i in its), item_jumlah=len(its),
-                                         label=f'{siap}/{len(istilah)} {"istilah" if Path(fail).suffix == ".csv" else "ayat"}, gaya {gaya}'))
+                                         label=f'{P.nama}: {siap}/{len(istilah)} {"istilah" if Path(fail).suffix == ".csv" else "ayat"}, gaya {gaya}'))
 
 
-def senarai_gaya():
-    g = set(GAYA_ASAS) | {f.stem for f in GAYA.glob('*.json')} | {a['gaya'] for a in baca()['ambilan']}
+def senarai_gaya(persona=None):
+    P = dapat(persona)
+    g = set(GAYA_ASAS) | {f.stem for f in P.gaya.glob('*.json')} | {a['gaya'] for a in baca(P)['ambilan']}
     return GAYA_ASAS + sorted(g - set(GAYA_ASAS))
 
 
@@ -121,6 +123,7 @@ def proses(pcm, sr_masuk, teks, rujukan_lain=()):
 # ── pelayan ──────────────────────────────────────────────────────────────────
 class H(BaseHTTPRequestHandler):
     fail_lalai = str(ISTILAH)
+    persona_lalai = None
 
     def log_message(self, *a): pass
 
@@ -138,7 +141,7 @@ class H(BaseHTTPRequestHandler):
             if p == '/uji':
                 return self.hantar(200, (Path(__file__).parent / 'uji.html').read_bytes(), 'text/html; charset=utf-8')
             if p == '/api/uji/mula':
-                from . import uji; return self.hantar(200, uji.mula())
+                from . import uji; return self.hantar(200, uji.mula(q.get('persona') or self.persona_lalai))
             if p == '/api/uji/rawak':
                 from . import uji; return self.hantar(200, dict(teks=uji.ayat_rawak(q.get('mod', 'ayat'))))
             if p == '/api/uji/sebut':
@@ -146,12 +149,14 @@ class H(BaseHTTPRequestHandler):
             if p == '/':
                 return self.hantar(200, (Path(__file__).parent / 'rakam.html').read_bytes(), 'text/html; charset=utf-8')
             if p == '/api/mula':
-                return self.hantar(200, dict(fail=senarai_fail(), fail_lalai=self.fail_lalai, gaya=senarai_gaya()))
+                pl = q.get('persona') or self.persona_lalai or persona_lalai()
+                return self.hantar(200, dict(fail=senarai_fail(), fail_lalai=self.fail_lalai, gaya=senarai_gaya(pl), persona=senarai_persona(),
+                                             persona_lalai=pl, aturan_persona=ATURAN))
             if p == '/api/item':
-                return self.hantar(200, status(q.get('fail', self.fail_lalai), q.get('gaya', 'santai')))
+                return self.hantar(200, status(q.get('fail', self.fail_lalai), q.get('gaya', 'santai'), q.get('persona')))
             if p == '/audio':
                 f = (D / q['f']).resolve()
-                if not (f.is_relative_to(BANK) or f.is_relative_to(DRAF) or f.is_relative_to(KERJA / 'uji') or f.is_relative_to(D / 'rujukan')) or not f.exists(): return self.hantar(404, {'ralat': 'tiada'})
+                if not (f.is_relative_to(PERSONA) or f.is_relative_to(DRAF) or f.is_relative_to(KERJA / 'uji')) or not f.exists(): return self.hantar(404, {'ralat': 'tiada'})
                 return self.hantar(200, f.read_bytes(), 'audio/flac')
             self.hantar(404, {'ralat': 'tiada'})
         except Exception as e:
@@ -168,44 +173,46 @@ class H(BaseHTTPRequestHandler):
                     lain += [it['istilah']] + ([it['sebutan'].replace('-', ''), it['sebutan'].replace('-', ' ')] if it['sebutan'] else [])
                 return self.hantar(200, proses(badan, int(q['sr']), it['teks'], lain))
             if p == '/api/simpan':
-                J = json.loads(badan); it = item(J['fail'])[int(J['indeks'])]; g = slug(J['gaya']) or 'santai'
+                J = json.loads(badan); it = item(J['fail'])[int(J['indeks'])]; g = slug(J['gaya']) or 'santai'; P = dapat(J.get('persona'))
                 src = DRAF / f"{re.sub(r'[^0-9a-f]', '', J['draf'])}.flac"
-                n = ambilan_seterusnya(it['slug'], g, it['jenis'])
-                rel = f"{it['slug']}/{g}-{it['jenis']}-{n:02d}.flac"; (BANK / it['slug']).mkdir(parents=True, exist_ok=True)
-                shutil.move(src, BANK / rel)
+                n = ambilan_seterusnya(P, it['slug'], g, it['jenis'])
+                rel = f"{it['slug']}/{g}-{it['jenis']}-{n:02d}.flac"; (P.bank / it['slug']).mkdir(parents=True, exist_ok=True)
+                shutil.move(src, P.bank / rel)
                 m = J.get('meta', {})
-                rek = tambah(dict(fail=rel, istilah=it['istilah'], slug=it['slug'], teks=it['teks'], gaya=g, jenis=it['jenis'], ambilan=n,
+                rek = tambah(P, dict(fail=rel, istilah=it['istilah'], slug=it['slug'], teks=it['teks'], gaya=g, jenis=it['jenis'], ambilan=n,
                                   tempoh=m.get('tempoh'), skor_whisper=m.get('skor_whisper'), didengar=m.get('didengar'),
                                   puncak_db=m.get('puncak_db'), rms_db=m.get('rms_db'), amaran=m.get('amaran', []),
                                   sumber=Path(J['fail']).name))
                 return self.hantar(200, rek)
             if p == '/api/pilih':
-                J = json.loads(badan)
-                from .bank import _kunci, tulis
-                with _kunci:
-                    M = baca(); sasar = next(a for a in M['ambilan'] if a['fail'] == J['fail'])
-                    for a in M['ambilan']:
-                        if (a['slug'], a['gaya'], a['jenis']) == (sasar['slug'], sasar['gaya'], sasar['jenis']): a['pilihan'] = a is sasar
-                    tulis(M)
+                J = json.loads(badan); pilih(J.get('persona'), J['fail'])
                 return self.hantar(200, {'ok': True})
             if p == '/api/uji/jana':
                 from . import uji; return self.hantar(200, uji.jana(json.loads(badan)))
             if p == '/api/uji/nilai':
                 from . import uji; return self.hantar(200, uji.nilai(json.loads(badan)))
             if p == '/api/gaya':
-                n = slug(json.loads(badan)['nama'])
+                J = json.loads(badan); n = slug(J['nama']); P = dapat(J.get('persona'))
                 if not n: return self.hantar(400, {'ralat': 'nama kosong'})
-                GAYA.mkdir(exist_ok=True); f = GAYA / f'{n}.json'
+                P.gaya.mkdir(parents=True, exist_ok=True); f = P.gaya / f'{n}.json'
                 if not f.exists(): f.write_text(json.dumps(dict(nama=n, rujukan=None), indent=1))
-                return self.hantar(200, dict(gaya=senarai_gaya(), baru=n))
+                return self.hantar(200, dict(gaya=senarai_gaya(P.nama), baru=n))
+            if p == '/api/persona':
+                J = json.loads(badan)
+                try:
+                    P = cipta((J.get('nama') or '').strip(), (J.get('paparan') or '').strip(), (J.get('keterangan') or '').strip(), bool(J.get('izin')))
+                except ValueError as e:
+                    return self.hantar(400, {'ralat': str(e)})
+                return self.hantar(200, dict(persona=senarai_persona(), baru=P.nama))
             self.hantar(404, {'ralat': 'tiada'})
         except Exception as e:
             import traceback; traceback.print_exc()
             self.hantar(500, {'ralat': str(e)})
 
 
-def jalan(port, fail, buka=True):
+def jalan(port, fail, buka=True, persona=None):
     H.fail_lalai = str(Path(fail).resolve())
+    if persona: H.persona_lalai = dapat(persona).nama
     s = ThreadingHTTPServer(('127.0.0.1', port), H)
     url = f'http://127.0.0.1:{port}/'
     print(f'Perakam suara-saya: {url}   portal uji: {url}uji   (localhost sahaja; Ctrl-C untuk henti)', flush=True)

@@ -55,7 +55,7 @@ def whisper(wav):
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     pats = istilah()
-    m = load(device()); m.prepare_conditionals(str(Path(__file__).resolve().parent.parent / 'rujukan' / 'santai.flac'), exaggeration=0.5)
+    m = load(device()); m.prepare_conditionals(str(Path(__file__).resolve().parent.parent / 'persona' / 'fairuz' / 'rujukan' / 'santai.flac'), exaggeration=0.5)
     gap = np.zeros(int(0.9 * m.sr), np.float32); semua = []; lap = []
     for i, a in enumerate(AYAT, 1):
         varian = {'A': a, 'B': tukar(a, pats, ''), 'C': tukar(a, pats, ' ')}

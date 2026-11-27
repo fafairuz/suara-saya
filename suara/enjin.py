@@ -6,9 +6,10 @@ from . import VERSI, WHISPER_MODEL
 from .sebutan import tukar
 from .dengar import whisper, skor_terbaik
 from .bank import rujukan
+from .persona import dapat as dapat_persona
 
 MIN_SKOR = 0.85
-TETAPAN = dict(cfg=0.5, ex=0.5, suhu=0.7)      # lalai enjin (cfg_weight, exaggeration, temperature)
+TETAPAN = dict(cfg=0.3, ex=0.5, suhu=0.5)      # lalai enjin = varian3 (dipilih pengguna 27 Nov 2026; dulu 0.5/0.5/0.7)
 
 
 def log(*a):
@@ -16,21 +17,23 @@ def log(*a):
 
 
 class Enjin:
-    def __init__(self, gaya='santai', istilah=None):
+    def __init__(self, gaya='santai', istilah=None, persona=None):
         import torch
         from .model import muat
         self.torch = torch; self.gaya = gaya; self.istilah = istilah
+        self.persona = dapat_persona(persona); rujukan(self.persona, gaya)     # gagal awal (sebelum muat model) jika tiada klip
         t0 = time.time(); self.m = muat()
         self._conds = {}; self.guna(gaya)
         self.boleh_semak = bool(shutil.which('whisper-cli')) and os.path.exists(WHISPER_MODEL)
         if not self.boleh_semak: log('  (whisper-cli atau modelnya tiada: semakan dan cuba semula dimatikan)')
-        log(f'  suara-saya {VERSI}: model dimuat {time.time() - t0:.0f} s, gaya {gaya} ({self.ket})')
+        log(f'  suara-saya {VERSI}: model dimuat {time.time() - t0:.0f} s, persona {self.persona.nama}, gaya {gaya} ({self.ket})')
 
-    def guna(self, gaya, ex=None, ruj=None):
-        """tetapkan klip rujukan (ikut gaya, atau laluan ruj) dan exaggeration; conds disimpan dalam cache"""
+    def guna(self, gaya, ex=None, ruj=None, persona=None):
+        """tetapkan persona, klip rujukan (ikut gaya, atau laluan ruj) dan exaggeration; conds disimpan dalam cache"""
+        if persona: self.persona = dapat_persona(persona)
         ex = TETAPAN['ex'] if ex is None else float(ex)
         if ruj: self.ruj, self.ket = Path(ruj), f'tetap: {ruj}'
-        else: self.ruj, self.ket = rujukan(gaya)
+        else: self.ruj, self.ket = rujukan(self.persona, gaya)
         self.gaya = gaya; k = (str(self.ruj), self.ruj.stat().st_mtime, ex)
         if k not in self._conds:
             self.m.prepare_conditionals(str(self.ruj), exaggeration=ex); self._conds[k] = self.m.conds
@@ -59,20 +62,20 @@ class Enjin:
         return terbaik
 
 
-def jana(masuk, keluar):
+def jana(masuk, keluar, persona=None):
     import numpy as np, soundfile as sf
     J = json.load(open(masuk, encoding='utf-8'))
     if J.get('kontrak', 1) != 1: sys.exit(f'Kontrak {J.get("kontrak")} tidak disokong (enjin ini: 1)')
     out = Path(keluar); out.mkdir(parents=True, exist_ok=True)
     gaya = J.get('gaya') or 'santai'; lang = J.get('bahasa', 'ms')
-    E = Enjin(gaya, J.get('istilah')); res = []
+    E = Enjin(gaya, J.get('istilah'), persona); res = []
     for a in J['ayat']:
         t0 = time.time()
         w, dihantar, s, h, b = E.satu(a['teks'], a.get('benih', 7), lang)
         sf.write(out / f"{a['id']}.wav", w.astype(np.float32), E.sr)
         res.append(dict(id=a['id'], fail=f"{a['id']}.wav", teks_dihantar=dihantar, skor_whisper=s, didengar=h, benih=b))
         log(f"  {a['id']}: {len(w) / E.sr:.1f} s audio, {time.time() - t0:.0f} s, " + (f'skor {s:.0%} ' if s is not None else '') + f"| {dihantar}")
-    json.dump(dict(enjin=dict(nama='suara-saya', versi=VERSI, model='chatterbox-multilingual-v3', gaya=gaya, rujukan=E.ket), ayat=res),
+    json.dump(dict(enjin=dict(nama='suara-saya', versi=VERSI, model='chatterbox-multilingual-v3', persona=E.persona.nama, gaya=gaya, rujukan=E.ket), ayat=res),
               open(out / 'hasil.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 
 
@@ -80,10 +83,10 @@ def pecah_ayat(t):
     return [s.strip() for s in re.split(r'(?<=[.!?])\s+|\n+', t) if s.strip()]
 
 
-def cakap(teks, gaya, keluar, benih=7, semak=True, istilah=None):
+def cakap(teks, gaya, keluar, benih=7, semak=True, istilah=None, persona=None):
     import numpy as np, soundfile as sf, subprocess
     if teks == '-': teks = sys.stdin.read()
-    E = Enjin(gaya, istilah); bahagian = []; jeda = np.zeros(int(0.35 * E.sr), np.float32)
+    E = Enjin(gaya, istilah, persona); bahagian = []; jeda = np.zeros(int(0.35 * E.sr), np.float32)
     for s in pecah_ayat(teks):
         w, dihantar, sk, h, b = E.satu(s, benih, semak=semak)
         bahagian += [w.astype(np.float32), jeda]

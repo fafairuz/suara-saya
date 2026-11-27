@@ -7,8 +7,6 @@ from pathlib import Path
 VERSI = '0.1.0'
 D = Path(__file__).resolve().parent.parent          # akar repo
 MODEL = D / 'models' / 'chatterbox'
-BANK = D / 'bank'
-GAYA = D / 'gaya'
 KERJA = D / 'kerja'
 ISTILAH = D / 'istilah-saya.csv'
 WHISPER_MODEL = os.environ.get('WHISPER_MODEL', os.path.expanduser('~/.local/share/whisper/models/ggml-large-v3-turbo.bin'))

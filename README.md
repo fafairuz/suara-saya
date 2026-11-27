@@ -1,26 +1,27 @@
 # suara-saya
 
-**Suara saya (pemilik repo ini) sebagai enjin TTS yang boleh dipakai sesiapa, dari projek apa pun.**
-Teks Bahasa Melayu santai bercampur istilah English menjadi audio dalam suara saya. Semuanya jalan tempatan di mesin anda: tiada API, tiada langganan, dan teks atau audio tak dihantar ke mana-mana.
-
-> *English summary:* a local, offline voice-clone TTS of my voice for Malay mixed with English tech terms.
+**Suara saya (pemilik repo ini), dan suara kawan-kawan yang menyumbang, sebagai enjin TTS yang boleh dipakai sesiapa, dari projek apa pun.**
+Teks Bahasa Melayu santai bercampur istilah English menjadi audio dalam suara sebenar seseorang. Setiap suara ialah satu **persona** (lalai: `fairuz`).
+Semuanya jalan tempatan di mesin anda: tiada API, tiada langganan, dan teks atau audio tak dihantar ke mana-mana. 
+> *English summary:* a local, offline voice-clone TTS of my voice (and contributors' voices, one **persona** each) for Malay mixed with English tech terms.
 > One CLI (`bin/suara`) that any project or AI agent (Claude Code, Codex, Cursor, Gemini, …) can call.
 > Built on Chatterbox Multilingual V3 (MIT). Agents should read [AGENTS.md](AGENTS.md).
 
-## Dengar dulu
+## Dengar dulu (persona `fairuz`)
 
 | Fail | Apa |
 |---|---|
-| [sampel/asli-rakaman.flac](sampel/asli-rakaman.flac) | Rakaman **asli** suara saya, 12 s. Ini klip rujukan lalai. |
-| [sampel/klon-1.flac](sampel/klon-1.flac) | Klon: "Bila dokumen sampai, sistem kira hash dia. Lepas tu, hash tu disimpan dalam blockchain sebagai cryptographic proof." |
-| [sampel/klon-2.flac](sampel/klon-2.flac) | Klon: "Kita host LLM sendiri on-prem. Jadi data sensitif tak keluar langsung dari rangkaian agensi." |
-| [sampel/klon-3.flac](sampel/klon-3.flac) | Klon: "Dashboard ni tunjuk status workflow secara real-time, dari request masuk sampai approval akhir." |
+| [persona/fairuz/sampel/asli-rakaman.flac](persona/fairuz/sampel/asli-rakaman.flac) | Rakaman **asli** suara saya, 12 s. Ini klip rujukan lalai. |
+| [klon-1.flac](persona/fairuz/sampel/klon-1.flac) | Klon: "Bila dokumen sampai, sistem kira hash dia. Lepas tu, hash tu disimpan dalam blockchain sebagai cryptographic proof." |
+| [klon-2.flac](persona/fairuz/sampel/klon-2.flac) | Klon: "Kita host LLM sendiri on-prem. Jadi data sensitif tak keluar langsung dari rangkaian agensi." |
+| [klon-3.flac](persona/fairuz/sampel/klon-3.flac) | Klon: "Dashboard ni tunjuk status workflow secara real-time, dari request masuk sampai approval akhir." |
 | [ujian/ab/semua-ABC.flac](ujian/ab/semua-ABC.flac) | Ujian ejaan sebutan: setiap ayat dibaca tiga kali (A asal, B sebutan cantum, C sebutan berjarak). |
 
-Teks sampel ada dalam [sampel/teks.txt](sampel/teks.txt). GitHub tak memainkan FLAC dalam pelayar, jadi muat turun fail dan buka dengan pemain audio biasa.
+Teks sampel ada dalam [persona/fairuz/sampel/teks.txt](persona/fairuz/sampel/teks.txt). GitHub tak memainkan FLAC dalam pelayar, jadi muat turun fail dan buka dengan pemain audio biasa.
 
 ## Terma guna suara saya
 
+Terma ini terpakai pada **setiap persona**. "Saya" bermaksud pemilik suara persona itu (lihat `persona/<nama>/persona.json`).
 Suara ini milik saya. Anda **dibenarkan** memakainya untuk:
 
 - video, taklimat, demo, tutorial, kandungan pembelajaran dan prototaip, termasuk projek kerja;
@@ -71,6 +72,8 @@ suara-saya/bin/suara cakap "Kita host LLM sendiri on-prem." -o uji.wav
 ```bash
 bin/suara cakap "Teks anda di sini." -o keluar.wav        # .wav .flac .mp3 .m4a
 bin/suara cakap "Satu ayat. Dua ayat." --gaya tegas -o a.mp3
+bin/suara cakap "Helo semua." --persona ahmad -o a.wav      # suara persona lain
+bin/suara persona senarai                                  # persona yang ada
 echo "Teks panjang dari fail…" | bin/suara cakap - -o a.wav  # baca stdin
 bin/suara cakap "…" --tanpa-semak -o a.wav                # lebih laju, tanpa semakan whisper
 bin/suara cakap "…" --istilah istilah-projek-saya.csv -o a.wav
@@ -126,7 +129,28 @@ import { execFileSync } from "node:child_process";
 execFileSync(process.env.SUARA ?? "../suara-saya/bin/suara", ["cakap", "Helo semua.", "-o", "helo.wav"], { stdio: "inherit" });
 ```
 
+Untuk `jana`, pilih persona dengan `--persona <nama>` atau pemboleh ubah `SUARA_PERSONA=<nama>`. Tanpa kedua-duanya, persona lalai dalam `persona/lalai.txt` (`fairuz`) dipakai. `hasil.json` menyatakan persona yang dipakai dalam `enjin.persona`.
+
 **Petua:** biar projek anda baca laluan enjin dari pemboleh ubah `SUARA`, dengan lalai `../suara-saya/bin/suara`. Itulah cara [video-template](docs/kontrak-suara.md) mencarinya.
+
+### Persona
+
+Setiap persona ialah suara seorang manusia sebenar, dengan folder sendiri:
+
+```
+persona/<nama>/persona.json   siapa, izin pemilik suara, tarikh
+persona/<nama>/bank/          rakaman bank + manifest.json
+persona/<nama>/rujukan/       klip rujukan lalai (<gaya>.flac)
+persona/<nama>/gaya/          <gaya>.json untuk tetapkan klip rujukan
+persona/<nama>/sampel/        sampel untuk didengar
+```
+
+> **Nama persona mesti SATU perkataan sahaja**, huruf kecil a–z, 2–20 huruf: `fairuz`, `ahmad`, `deedat`.
+> **Jangan cantum dua perkataan jadi satu**: ~~`AhmadDeedat`~~, ~~`ahmaddeedat`~~, ~~`ahmad_deedat`~~, ~~`ahmad-deedat`~~. Pilih satu sahaja, contohnya `ahmad` atau `deedat`.
+> Nama penuh boleh ditulis dalam `paparan` (contoh `"Ahmad Deedat"`).
+
+Enjin **tidak pernah meminjam suara persona lain**. Jika persona belum ada klip rujukan, `cakap` dan `jana` gagal serta-merta dengan arahan untuk merakam.
+Cara menyumbang suara anda sendiri ada dalam [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ### Gaya
 
@@ -134,7 +158,9 @@ execFileSync(process.env.SUARA ?? "../suara-saya/bin/suara", ["cakap", "Helo sem
 Gaya sedia ada ialah `santai`, `tegas` dan `tanya`. Jika rakaman untuk gaya itu belum ada, enjin guna `santai`.
 Klip rujukan dipilih ikut susunan ini:
 
-1. `gaya/<gaya>.json`, contohnya `{"rujukan": "bank/llm/tegas-ayat-01.flac"}`;
+Setiap langkah dicari dalam folder persona itu sendiri (`persona/<nama>/…`):
+
+1. `gaya/<gaya>.json`, contohnya `{"rujukan": "bank/llm/tegas-ayat-01.flac"}` (relatif kepada folder persona);
 2. ambilan ayat terbaik dalam `bank/`, 8–12 s, skor whisper ≥ 90%;
 3. gabungan beberapa ambilan terbaik sehingga kira-kira 10 s;
 4. `rujukan/<gaya>.flac`;
@@ -163,10 +189,11 @@ Lajur `jenis` diisi `BM`, `EN` atau `AKRONIM`. Akronim dipadankan ikut huruf bes
 ## Rakam bank suara (untuk pemilik suara)
 
 ```bash
-bin/suara rakam      # http://127.0.0.1:8765, localhost sahaja
+bin/suara rakam                    # http://127.0.0.1:8765, localhost sahaja
+bin/suara rakam --persona ahmad    # terus buka persona ahmad
 ```
 
-Perakam ini halaman web tempatan. Menu **Fail** menyenaraikan setiap `*.csv` di akar repo, serta fail `skrip*.md` / `skrip*.txt`:
+Perakam ini halaman web tempatan. Pilih persona di menu **Persona**, atau tambah persona baru dengan **+ persona** (hanya untuk suara anda sendiri). Menu **Fail** menyenaraikan setiap `*.csv` di akar repo, serta fail `skrip*.md` / `skrip*.txt`:
 
 - `istilah-saya.csv`: 205 istilah, setiap satu dirakam sebagai *perkataan* dan *dalam ayat*.
 - `istilah-video-integriti.csv`: 18 istilah dan 10 ayat dari video contoh video-template, termasuk perkataan BM yang selalu tergelincir.
@@ -191,7 +218,7 @@ Selepas setiap rakaman, perakam buat empat perkara secara automatik:
 - whisper semak teks yang disebut;
 - papar skor, dengan amaran jika rendah.
 
-Fail disimpan sebagai `bank/<istilah>/<gaya>-<kata|ayat>-NN.flac` (48 kHz mono). Ambilan lama tak dipadam. Semua ambilan direkod dalam `bank/manifest.json`.
+Fail disimpan sebagai `persona/<nama>/bank/<istilah>/<gaya>-<kata|ayat>-NN.flac` (48 kHz mono). Ambilan lama tak dipadam. Semua ambilan direkod dalam `persona/<nama>/bank/manifest.json`.
 
 ## Portal uji
 
@@ -206,8 +233,8 @@ Halaman untuk mencuba suara tanpa terminal:
   - *Templat rawak* isi ayat corak BM dengan istilah rawak dari CSV.
   - Kedua-duanya tak guna AI. Semuanya tempatan.
 - **Model akan baca:** teks selepas lapisan sebutan dipapar serta-merta semasa menaip.
-- **Tetapan:** pilih gaya, klip rujukan (auto, atau ambilan tertentu dari bank), dan benih.
-  Tandakan satu atau lebih praset (`semasa`, `varian3`, `cfg0`, `tenang`, atau `sendiri` dengan peluncur) untuk dibanding sebelah-menyebelah.
+- **Tetapan:** pilih persona, gaya, klip rujukan (auto, atau ambilan tertentu dari bank persona itu), dan benih.
+  Tandakan satu atau lebih praset untuk dibanding sebelah-menyebelah: `lalai` (cfg 0.3, ex 0.5, suhu 0.5: tetapan enjin sejak 27 Nov 2026), `lama` (0.5/0.5/0.7), `cfg0`, `tenang`, atau `sendiri` dengan peluncur.
 - **Hasil:** pemain audio, apa yang whisper dengar, dan skor untuk setiap versi. Nilai dengan 👍 / 👎 dan nota.
   Sejarah dan nilai disimpan dalam `kerja/uji/log.jsonl` (tempatan, tak masuk git).
 
@@ -225,19 +252,18 @@ Model dimuat sekali (kira-kira 20 s) pada jana pertama, dan kekal dalam memori p
 
 ```
 bin/suara              arahan utama (memanggil .venv/bin/python -m suara)
-suara/                 kod: sebutan.py, enjin.py, bank.py, dengar.py, model.py, rakam.py + rakam.html
+suara/                 kod: sebutan.py, enjin.py, persona.py, bank.py, dengar.py, model.py, rakam.py/.html, uji.py/.html
 istilah-saya.csv       istilah lalai dan sebutannya
-gaya/                  <gaya>.json, untuk menetapkan klip rujukan secara manual
-bank/                  rakaman bank suara (FLAC) + manifest.json
-rujukan/santai.flac    klip rujukan lalai
-sampel/                sampel untuk didengar
+persona/lalai.txt      persona lalai (fairuz)
+persona/<nama>/        satu folder setiap suara: persona.json, bank/, rujukan/, gaya/, sampel/
 ujian/                 ujian A/B ejaan sebutan
 docs/kontrak-suara.md  kontrak jana v1
 AGENTS.md              panduan untuk ejen AI (Claude Code, Codex, …)
+CONTRIBUTING.md        cara menyumbang suara (persona baru)
 ```
 
 ## Lesen
 
 - Kod dan dokumen repo ini: MIT, lihat [LICENSE](LICENSE).
 - Model Chatterbox: MIT (Resemble AI).
-- Suara dan rakaman dalam `bank/`, `rujukan/` dan `sampel/`: tertakluk pada **Terma guna suara saya** di atas.
+- Suara dan rakaman dalam `persona/`: milik pemilik suara masing-masing, tertakluk pada **Terma guna suara saya** di atas. Tidak dilesenkan di bawah MIT.

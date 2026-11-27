@@ -55,6 +55,7 @@ details summary{cursor:pointer;color:var(--lemah)}
   <section class="kad">
     <h2>Tetapan</h2>
     <div class="baris">
+      <label>Persona <select id="persona"></select></label>
       <label>Gaya <select id="gaya"></select></label>
       <label>Rujukan <select id="rujukan"></select></label>
       <label>Benih <input id="benih" type="number" value="7" style="width:90px"></label>
@@ -85,11 +86,12 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&
 async function api(u, o) { const r = await fetch(u, o); const j = await r.json(); if (!r.ok) throw new Error(j.ralat || r.status); return j; }
 let PRASET = [];
 
-async function mula() {
-  const m = await api('/api/uji/mula'); PRASET = m.praset;
+async function mula(persona) {
+  const m = await api('/api/uji/mula' + (persona ? '?persona=' + encodeURIComponent(persona) : '')); PRASET = m.praset;
+  $('#persona').innerHTML = m.persona.map(x => `<option>${esc(x)}</option>`).join(''); $('#persona').value = m.persona_dipilih;
   $('#gaya').innerHTML = m.gaya.map(g => `<option>${esc(g)}</option>`).join('');
   $('#rujukan').innerHTML = m.rujukan.map(r => `<option value="${esc(r.nilai)}">${esc(r.label)}</option>`).join('');
-  $('#praset').innerHTML = m.praset.map((p, i) => `<label><input type="checkbox" value="${i}" ${p.nama === 'semasa' || p.nama === 'varian3' ? 'checked' : ''}>
+  $('#praset').innerHTML = m.praset.map((p, i) => `<label><input type="checkbox" value="${i}" ${p.nama === 'lalai' || p.nama === 'lama' ? 'checked' : ''}>
       <span><b>${esc(p.nama)}</b><small>cfg ${p.cfg} · ex ${p.ex} · suhu ${p.suhu}<br>${esc(p.ket)}</small></span></label>`).join('')
     + `<label><input type="checkbox" value="sendiri" id="cSendiri"><span><b>sendiri</b><small>laras cfg, exaggeration, suhu</small></span></label>`;
   $('#cSendiri').onchange = e => $('#sendiri').style.display = e.target.checked ? 'flex' : 'none';
@@ -115,7 +117,7 @@ function kelas(s) { return s == null ? '' : s >= 0.9 ? 'ok' : s >= 0.8 ? 'sederh
 function kadHasil(r, kecil) {
   return `<div class="hasil" data-id="${r.id}">
     <div class="atas"><span class="nama">${esc(r.praset)}</span>
-      <span class="param">cfg ${r.cfg} · ex ${r.ex} · suhu ${r.suhu} · ${esc(r.gaya)} · ${esc(r.rujukan)}</span>
+      <span class="param">${esc(r.persona || '')} · cfg ${r.cfg} · ex ${r.ex} · suhu ${r.suhu} · ${esc(r.gaya)} · ${esc(r.rujukan)}</span>
       <span class="skor ${kelas(r.skor)}">${r.skor == null ? '' : Math.round(r.skor * 100) + '%'}</span>
       <span class="param">${r.tempoh} s audio · ${r.masa_jana ?? '?'} s jana${kecil ? ' · ' + esc(r.tarikh) : ''}</span></div>
     ${kecil ? `<div class="ayat"><i>${esc(r.teks)}</i></div>` : ''}
@@ -140,15 +142,16 @@ async function jana() {
   $('#bJana').disabled = true; const t0 = Date.now();
   const jam = setInterval(() => $('#status').textContent = `Menjana ${pilih.length} versi… ${Math.round((Date.now() - t0) / 1000)} s`, 500);
   try {
-    const r = await api('/api/uji/jana', {method: 'POST', body: JSON.stringify({teks, gaya: $('#gaya').value, rujukan: $('#rujukan').value,
+    const r = await api('/api/uji/jana', {method: 'POST', body: JSON.stringify({teks, persona: $('#persona').value, gaya: $('#gaya').value, rujukan: $('#rujukan').value,
       benih: +$('#benih').value, semak: $('#semak').checked, praset: pilih})});
     $('#kadHasil').hidden = false; $('#hasil').innerHTML = r.hasil.map(x => kadHasil(x, false)).join('');
     $('#status').textContent = `Siap dalam ${Math.round((Date.now() - t0) / 1000)} s` + (r.muat_model_s > 2 ? ` (termasuk muat model ${r.muat_model_s} s)` : '') + '. Dengar, kemudian nilai.';
-    const m = await api('/api/uji/mula'); sejarah(m.sejarah);
+    const m = await api('/api/uji/mula?persona=' + encodeURIComponent($('#persona').value)); sejarah(m.sejarah);
   } catch (e) { $('#status').textContent = 'Ralat: ' + e.message; }
   clearInterval(jam); $('#bJana').disabled = false;
 }
 $('#bJana').onclick = jana;
+$('#persona').onchange = e => mula(e.target.value);
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); jana(); } });
 mula().catch(e => $('#status').textContent = 'Ralat: ' + e.message);
 </script>

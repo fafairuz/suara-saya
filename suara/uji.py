@@ -4,15 +4,16 @@ Ayat rawak tak guna AI: ia diambil dari CSV/skrip sedia ada, atau templat BM yan
 import csv, json, random, re, threading, time, uuid
 from datetime import datetime
 from pathlib import Path
-from . import D, KERJA, BANK
+from . import D, KERJA
 from .sebutan import tukar
 from .bank import baca
+from .persona import dapat, senarai as senarai_persona, lalai as persona_lalai
 
 UJI = KERJA / 'uji'
 LOG = UJI / 'log.jsonl'
 PRASET = [
-    dict(nama='semasa', cfg=0.5, ex=0.5, suhu=0.7, ket='tetapan enjin sekarang'),
-    dict(nama='varian3', cfg=0.3, ex=0.5, suhu=0.5, ket='cfg 0.3, suhu 0.5 (paling bersih dalam ujian tetapan)'),
+    dict(nama='lalai', cfg=0.3, ex=0.5, suhu=0.5, ket='tetapan enjin sekarang (varian3)'),
+    dict(nama='lama', cfg=0.5, ex=0.5, suhu=0.7, ket='tetapan lalai sebelum 27 Nov 2026'),
     dict(nama='cfg0', cfg=0.0, ex=0.5, suhu=0.7, ket='kurang tiru gaya rujukan'),
     dict(nama='tenang', cfg=0.5, ex=0.3, suhu=0.5, ket='kurang ekspresif'),
 ]
@@ -54,19 +55,22 @@ def ayat_rawak(mod='ayat'):
     return random.choice(sorted(kolam))
 
 
-def senarai_rujukan():
-    """pilihan klip rujukan: auto, rujukan/*.flac, ambilan ayat dalam bank"""
+def senarai_rujukan(persona=None):
+    """pilihan klip rujukan persona: auto, rujukan/*.flac, ambilan ayat dalam bank"""
+    P = dapat(persona)
     r = [dict(nilai='', label='auto (ikut gaya)')]
-    r += [dict(nilai=str(p.relative_to(D)), label=f'rujukan/{p.name}') for p in sorted((D / 'rujukan').glob('*.flac'))]
-    for a in baca()['ambilan']:
-        if a['jenis'] == 'ayat' and (BANK / a['fail']).exists():
-            r.append(dict(nilai=f"bank/{a['fail']}", label=f"bank/{a['fail']} ({a['tempoh']} s, {round((a.get('skor_whisper') or 0) * 100)}%)"))
+    r += [dict(nilai=P.rel(q), label=f'rujukan/{q.name}') for q in sorted(P.rujukan.glob('*.flac'))]
+    for a in baca(P)['ambilan']:
+        if a['jenis'] == 'ayat' and (P.bank / a['fail']).exists():
+            r.append(dict(nilai=P.rel(P.bank / a['fail']), label=f"bank/{a['fail']} ({a['tempoh']} s, {round((a.get('skor_whisper') or 0) * 100)}%)"))
     return r
 
 
-def mula():
+def mula(persona=None):
     from .rakam import senarai_gaya
-    return dict(praset=PRASET, gaya=senarai_gaya(), rujukan=senarai_rujukan(), model_dimuat=_E is not None, sejarah=sejarah())
+    P = dapat(persona)
+    return dict(praset=PRASET, persona=senarai_persona(), persona_dipilih=P.nama, gaya=senarai_gaya(P.nama), rujukan=senarai_rujukan(P.nama),
+                model_dimuat=_E is not None, sejarah=sejarah())
 
 
 def sejarah(n=30):
@@ -78,7 +82,7 @@ def sejarah(n=30):
 
 
 def jana(J):
-    """J: {teks, gaya, rujukan?, praset:[{nama,cfg,ex,suhu}], benih, semak}"""
+    """J: {teks, persona?, gaya, rujukan?, praset:[{nama,cfg,ex,suhu}], benih, semak}"""
     global _E
     import numpy as np, soundfile as sf
     teks = (J.get('teks') or '').strip()
@@ -88,12 +92,17 @@ def jana(J):
     UJI.mkdir(parents=True, exist_ok=True); hasil = []
     with _kunci:                                          # satu jana pada satu masa (GPU)
         t0 = time.time()
+        P = dapat(J.get('persona'))
+        ruj = None
+        if J.get('rujukan'):
+            ruj = (D / J['rujukan']).resolve()
+            if not ruj.is_relative_to(P.dir): raise ValueError('klip rujukan mesti dari persona yang sama')
         if _E is None:
             from .enjin import Enjin
-            _E = Enjin(J.get('gaya') or 'santai')
+            _E = Enjin(J.get('gaya') or 'santai', persona=P.nama)
         muat_s = round(time.time() - t0, 1)
         for p in J.get('praset') or PRASET[:1]:
-            _E.guna(J.get('gaya') or 'santai', p.get('ex'), (D / J['rujukan']) if J.get('rujukan') else None)
+            _E.guna(J.get('gaya') or 'santai', p.get('ex'), ruj, P.nama)
             t1 = time.time(); bahagian = []; ayat = []
             for s in pecah_ayat(teks):
                 w, dihantar, sk, h, b = _E.satu(s, int(J.get('benih', 7)), semak=bool(J.get('semak', True)), cfg=p.get('cfg'), suhu=p.get('suhu'))
@@ -102,7 +111,7 @@ def jana(J):
             y = np.concatenate(bahagian[:-1]); y = y / max(1e-6, np.abs(y).max()) * 0.89
             i = uuid.uuid4().hex[:10]; f = UJI / f'{i}.flac'; sf.write(f, y, _E.sr)
             sk = [a['skor'] for a in ayat if a['skor'] is not None]
-            r = dict(jenis='jana', id=i, tarikh=datetime.now().isoformat(timespec='seconds'), teks=teks, gaya=_E.gaya, rujukan=_E.ket,
+            r = dict(jenis='jana', id=i, tarikh=datetime.now().isoformat(timespec='seconds'), teks=teks, persona=P.nama, gaya=_E.gaya, rujukan=_E.ket,
                      praset=p.get('nama', 'sendiri'), cfg=p.get('cfg'), ex=_E.ex, suhu=p.get('suhu'), fail=f'kerja/uji/{i}.flac',
                      tempoh=round(len(y) / _E.sr, 1), masa_jana=round(time.time() - t1, 1), skor=min(sk) if sk else None, ayat=ayat)
             with open(LOG, 'a', encoding='utf-8') as fo: fo.write(json.dumps(r, ensure_ascii=False) + '\n')

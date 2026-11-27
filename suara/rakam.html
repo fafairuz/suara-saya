@@ -41,17 +41,36 @@ main{max-width:860px;margin:0 auto;padding:24px 16px;display:grid;gap:16px}
 kbd{font:12px ui-monospace,monospace;border:1px solid var(--garis);border-bottom-width:2px;border-radius:4px;padding:1px 6px;color:var(--teks);background:var(--kad)}
 details summary{cursor:pointer;font-weight:600}
 details li{margin:4px 0}
+dialog{border:1px solid var(--garis);border-radius:14px;background:var(--kad);color:var(--teks);max-width:480px;width:calc(100% - 32px)}
+dialog::backdrop{background:rgba(0,0,0,.4)}
+dialog input:not([type=checkbox]){width:100%}
+.nota{color:var(--lemah);font-size:14px}
 </style>
 </head>
 <body>
 <header>
   <h1>Perakam suara-saya</h1>
+  <label>Persona <select id="persona"></select></label>
+  <button id="tambahPersona" title="Tambah persona (suara orang lain, dengan izin dia)">+ persona</button>
   <label>Fail <select id="fail"></select></label>
   <label>Gaya <select id="gaya"></select></label>
   <button id="tambahGaya" title="Tambah gaya baru">+ gaya</button>
   <span id="kemajuan"></span>
   <a href="/uji" style="color:var(--aksen)">Portal uji →</a>
 </header>
+<dialog id="dPersona">
+  <form method="dialog" id="fPersona">
+    <h3 style="margin-top:0">Persona baru</h3>
+    <p class="nota" id="aturan"></p>
+    <p><label>Nama persona<br><input id="pNama" required pattern="[a-z]{2,20}" placeholder="contoh: ahmad" autocomplete="off"></label><br>
+       <small class="nota">Satu perkataan sahaja, huruf kecil. <b>Bukan</b> <s>AhmadDeedat</s> atau <s>ahmad_deedat</s>: pilih <b>ahmad</b> atau <b>deedat</b>.</small></p>
+    <p><label>Nama paparan<br><input id="pPaparan" placeholder="contoh: Ahmad"></label></p>
+    <p><label>Keterangan (pilihan)<br><input id="pKet" placeholder="contoh: suara taklimat, loghat utara"></label></p>
+    <p><label><input type="checkbox" id="pIzin"> Saya <b>pemilik suara ini</b> dan saya izinkan ia digunakan ikut terma dalam README.md.</label></p>
+    <p id="pRalat" class="amaran"></p>
+    <p><button value="batal" formnovalidate>Batal</button> <button class="utama" id="pCipta" value="cipta">Cipta</button></p>
+  </form>
+</dialog>
 <div class="bar"><div id="barIsi"></div></div>
 <main>
   <section class="kad">
@@ -98,22 +117,25 @@ details li{margin:4px 0}
 </main>
 <script>
 const $ = s => document.querySelector(s);
-let S = {fail: '', gaya: 'santai', item: [], i: 0, draf: null, merakam: false, audio: null};
+let S = {persona: '', fail: '', gaya: 'santai', item: [], i: 0, draf: null, merakam: false, audio: null};
 let ctx, strm, node, chunks = [], sr = 48000;
 
 async function api(u, o) { const r = await fetch(u, o); const j = await r.json(); if (!r.ok) throw new Error(j.ralat || r.status); return j; }
-const kunciSimpan = () => 'suara-i:' + S.fail + ':' + S.gaya;
+const kunciSimpan = () => 'suara-i:' + S.persona + ':' + S.fail + ':' + S.gaya;
+const qp = () => '&persona=' + encodeURIComponent(S.persona);
 
 async function mula() {
-  const m = await api('/api/mula');
+  const m = await api('/api/mula' + (S.persona ? '?persona=' + encodeURIComponent(S.persona) : ''));
+  S.persona = m.persona_lalai; isiPersona(m.persona); $('#aturan').textContent = m.aturan_persona;
   $('#fail').innerHTML = m.fail.map(f => `<option value="${f}">${f.split('/').pop()}</option>`).join('');
   S.fail = m.fail_lalai; $('#fail').value = S.fail;
   isiGaya(m.gaya); await muatItem(true);
 }
+function isiPersona(ps) { $('#persona').innerHTML = ps.map(x => `<option>${x}</option>`).join(''); $('#persona').value = S.persona; }
 function isiGaya(g) { $('#gaya').innerHTML = g.map(x => `<option>${x}</option>`).join(''); $('#gaya').value = S.gaya; }
 
 async function muatItem(sambung) {
-  const r = await api(`/api/item?fail=${encodeURIComponent(S.fail)}&gaya=${encodeURIComponent(S.gaya)}`);
+  const r = await api(`/api/item?fail=${encodeURIComponent(S.fail)}&gaya=${encodeURIComponent(S.gaya)}` + qp());
   S.item = r.item; kemajuan(r.kemajuan);
   if (sambung) {
     let simpan = null; try { simpan = localStorage.getItem(kunciSimpan()); } catch (e) {}
@@ -140,7 +162,7 @@ function papar() {
   if (it.jenis === 'ayat' && it.istilah === it.teks) $('#istilah').textContent = '';
   S.draf = null; $('#hasil').innerHTML = ''; $('#bSimpan').disabled = true; $('#bMain').disabled = !it.ambilan.length;
   $('#ambilan').innerHTML = it.ambilan.map(a =>
-    `<button data-f="${a.fail}" class="${a.pilihan ? 'pilih' : ''}" title="klik main; shift-klik jadikan pilihan">#${a.ambilan} ${a.skor != null ? Math.round(a.skor * 100) + '%' : ''} ${a.tempoh}s${a.pilihan ? ' ★' : ''}</button>`).join('');
+    `<button data-f="${a.fail}" data-u="${a.url}" class="${a.pilihan ? 'pilih' : ''}" title="klik main; shift-klik jadikan pilihan">#${a.ambilan} ${a.skor != null ? Math.round(a.skor * 100) + '%' : ''} ${a.tempoh}s${a.pilihan ? ' ★' : ''}</button>`).join('');
 }
 
 async function sediaMic() {
@@ -181,13 +203,13 @@ function tunjukHasil(r) {
 }
 function main(f) {
   const it = S.item[S.i]; if (S.audio) S.audio.pause();
-  f = f || (S.draf ? 'kerja/draf/' + S.draf.draf + '.flac' : (it.ambilan.find(a => a.pilihan) || it.ambilan[it.ambilan.length - 1] || {}).fail && 'bank/' + (it.ambilan.find(a => a.pilihan) || it.ambilan[it.ambilan.length - 1]).fail);
+  f = f || (S.draf ? 'kerja/draf/' + S.draf.draf + '.flac' : (it.ambilan.find(a => a.pilihan) || it.ambilan[it.ambilan.length - 1] || {}).url);
   if (!f) return; S.audio = new Audio('/audio?f=' + encodeURIComponent(f)); S.audio.play();
 }
 async function simpan() {
   if (!S.draf || S.merakam) return;
   const it = S.item[S.i];
-  await api('/api/simpan', {method: 'POST', body: JSON.stringify({fail: S.fail, indeks: S.i, gaya: S.gaya, draf: S.draf.draf, meta: S.draf})});
+  await api('/api/simpan', {method: 'POST', body: JSON.stringify({persona: S.persona, fail: S.fail, indeks: S.i, gaya: S.gaya, draf: S.draf.draf, meta: S.draf})});
   S.i = Math.min(S.i + 1, S.item.length - 1); await muatItem(false);
 }
 function pergi(d) { if (S.merakam) return; S.i = Math.max(0, Math.min(S.item.length - 1, S.i + d)); papar(); }
@@ -195,14 +217,26 @@ function pergi(d) { if (S.merakam) return; S.i = Math.max(0, Math.min(S.item.len
 $('#bRakam').onclick = togolRakam; $('#bSimpan').onclick = simpan; $('#bMain').onclick = () => main();
 $('#ambilan').onclick = async e => {
   const b = e.target.closest('button'); if (!b) return;
-  if (e.shiftKey) { await api('/api/pilih', {method: 'POST', body: JSON.stringify({fail: b.dataset.f})}); await muatItem(false); }
-  else main('bank/' + b.dataset.f);
+  if (e.shiftKey) { await api('/api/pilih', {method: 'POST', body: JSON.stringify({persona: S.persona, fail: b.dataset.f})}); await muatItem(false); }
+  else main(b.dataset.u);
+};
+$('#persona').onchange = e => { S.persona = e.target.value; mula(); };
+$('#tambahPersona').onclick = () => { $('#pRalat').textContent = ''; $('#fPersona').reset(); $('#dPersona').showModal(); };
+$('#pCipta').onclick = async e => {
+  e.preventDefault();
+  const nama = $('#pNama').value.trim();
+  if (!/^[a-z]{2,20}$/.test(nama)) { $('#pRalat').textContent = 'Nama mesti satu perkataan huruf kecil a–z (2–20 huruf). Jangan cantum dua perkataan.'; return; }
+  if (!$('#pIzin').checked) { $('#pRalat').textContent = 'Persona hanya boleh dicipta oleh pemilik suara itu sendiri. Tandakan kotak izin.'; return; }
+  try {
+    const r = await api('/api/persona', {method: 'POST', body: JSON.stringify({nama, paparan: $('#pPaparan').value, keterangan: $('#pKet').value, izin: true})});
+    $('#dPersona').close(); S.persona = r.baru; await mula();
+  } catch (x) { $('#pRalat').textContent = x.message; }
 };
 $('#fail').onchange = e => { S.fail = e.target.value; muatItem(true); };
 $('#gaya').onchange = e => { S.gaya = e.target.value; muatItem(true); };
 $('#tambahGaya').onclick = async () => {
   const n = prompt('Nama gaya baru (contoh: cerita, serius):'); if (!n) return;
-  const r = await api('/api/gaya', {method: 'POST', body: JSON.stringify({nama: n})}); S.gaya = r.baru; isiGaya(r.gaya); muatItem(true);
+  const r = await api('/api/gaya', {method: 'POST', body: JSON.stringify({persona: S.persona, nama: n})}); S.gaya = r.baru; isiGaya(r.gaya); muatItem(true);
 };
 document.addEventListener('keydown', e => {
   if (e.target.matches('input,select,textarea') || e.metaKey || e.ctrlKey || e.altKey) return;

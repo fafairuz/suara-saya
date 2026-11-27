@@ -22,6 +22,6 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------
 Scope: this licence covers the source code and documentation only.
-The voice recordings and generated audio (bank/, rujukan/, sampel/, ujian/ab/)
-are NOT licensed under MIT; their use is governed by "Terma guna suara saya"
-in README.md.
+The voice recordings and generated audio (persona/, ujian/)
+belong to each voice's owner and are NOT licensed under MIT; their use is
+governed by "Terma guna suara saya" in README.md.
