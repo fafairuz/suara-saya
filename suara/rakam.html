@@ -23,7 +23,8 @@ main{max-width:860px;margin:0 auto;padding:24px 16px;display:grid;gap:16px}
 .lencana.ayat{border-color:var(--aksen);color:var(--aksen)}
 #istilah{font-size:clamp(36px,8vw,64px);font-weight:700;line-height:1.1;margin:16px 0 4px;overflow-wrap:anywhere}
 #sebutan{font-size:20px;color:var(--aksen)}
-#baca{font-size:clamp(20px,3.5vw,28px);margin-top:20px;padding:16px;border-left:4px solid var(--aksen);background:var(--bg);border-radius:6px}
+#labelBaca{margin-top:20px;font-size:13px;color:var(--lemah);text-transform:uppercase;letter-spacing:.04em}
+#baca{font-size:clamp(20px,3.5vw,28px);margin-top:6px;padding:16px;border-left:4px solid var(--aksen);background:var(--bg);border-radius:6px}
 #maksud{color:var(--lemah);margin-top:8px}
 #rakam{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 #titik{width:18px;height:18px;border-radius:50%;background:var(--garis)}
@@ -56,6 +57,7 @@ details li{margin:4px 0}
     <div class="atas"><span id="nombor"></span><span class="lencana" id="jenis"></span></div>
     <div id="istilah"></div>
     <div id="sebutan"></div>
+    <div id="labelBaca"></div>
     <div id="baca"></div>
     <div id="maksud"></div>
   </section>
@@ -131,7 +133,8 @@ function papar() {
   $('#jenis').className = 'lencana ' + it.jenis;
   $('#istilah').textContent = it.jenis === 'kata' || !it.sebutan ? it.istilah : it.istilah;
   $('#sebutan').textContent = it.sebutan ? 'sebutan: ' + it.sebutan : '';
-  $('#baca').textContent = it.jenis === 'kata' ? 'Sebut: ' + it.teks : it.teks;
+  $('#labelBaca').textContent = it.jenis === 'kata' ? 'Baca kuat perkataan ini sahaja:' : 'Baca kuat ayat ini:';
+  $('#baca').textContent = it.teks;
   $('#maksud').textContent = it.maksud || '';
   if (it.jenis === 'ayat' && it.istilah === it.teks) $('#istilah').textContent = '';
   S.draf = null; $('#hasil').innerHTML = ''; $('#bSimpan').disabled = true; $('#bMain').disabled = !it.ambilan.length;

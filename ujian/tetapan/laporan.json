@@ -1,0 +1,50 @@
+[
+ {
+  "varian": "1-semasa",
+  "rujukan": "santai.flac",
+  "cfg": 0.5,
+  "exaggeration": 0.5,
+  "suhu": 0.7,
+  "whisper": "JD Data Sensitive tak keluar langsung dari rangkayan agency. Sistem ni boleh diperkayai kumakena jaga betul betul."
+ },
+ {
+  "varian": "2-cfg0",
+  "rujukan": "santai.flac",
+  "cfg": 0.0,
+  "exaggeration": 0.5,
+  "suhu": 0.7,
+  "whisper": "Jadi data sensitif tak keluar langsung dari langkah yang agensi. Syistem ni boleh diperkayai. Kuma kena jaga betul betul."
+ },
+ {
+  "varian": "3-cfg03-suhu05",
+  "rujukan": "santai.flac",
+  "cfg": 0.3,
+  "exaggeration": 0.5,
+  "suhu": 0.5,
+  "whisper": "Jadi data sensitif tak keluar langsung dari rangkaian agensi. Sistem ni boleh diperkayai, kumakena jaga betul-betul."
+ },
+ {
+  "varian": "4-tenang",
+  "rujukan": "santai.flac",
+  "cfg": 0.5,
+  "exaggeration": 0.3,
+  "suhu": 0.5,
+  "whisper": "Jedi data sensitif tak keluar langsung dari rangkayan agensi. Sistem ni boleh diperkayai, kumakena jaga betul-betul."
+ },
+ {
+  "varian": "5-rujukan-s2",
+  "rujukan": "rujukan-s2.wav",
+  "cfg": 0.5,
+  "exaggeration": 0.5,
+  "suhu": 0.7,
+  "whisper": "J.D. Data Sensitive tak keluar langsung dari rangkaian agency. Système ni boleh di belkayai, kumake na jaga betul betul."
+ },
+ {
+  "varian": "6-rujukan-s2-cfg0",
+  "rujukan": "rujukan-s2.wav",
+  "cfg": 0.0,
+  "exaggeration": 0.5,
+  "suhu": 0.7,
+  "whisper": "Jadi, data-sensitive tak keluar langsung dari rungkayan agency. System ni boleh diperkayai, koma kena jaka bedu-bedu."
+ }
+]

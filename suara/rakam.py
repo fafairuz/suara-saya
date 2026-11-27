@@ -23,12 +23,14 @@ def item(fail):
     if k in _cache: return _cache[k]
     out = []
     if p.suffix.lower() == '.csv':
+        ayat_dah = set()                   # ayat contoh yang dikongsi beberapa istilah dirakam sekali sahaja
         for r in csv.DictReader(open(p, encoding='utf-8')):
             ist = r['istilah'].strip(); s = slug(ist); seb = r.get('sebutan', '').strip()
             base = dict(istilah=ist, slug=s, sebutan=seb, contoh=r.get('contoh_ayat', '').strip(), maksud=r.get('maksud_bm', '').strip(),
                         jenis_istilah=r.get('jenis', ''))
             out.append(dict(base, jenis='kata', teks=r.get('bentuk_tulisan') or ist))
-            if base['contoh']: out.append(dict(base, jenis='ayat', teks=base['contoh']))
+            if base['contoh'] and base['contoh'] not in ayat_dah:
+                ayat_dah.add(base['contoh']); out.append(dict(base, jenis='ayat', teks=base['contoh']))
     else:
         baris = open(p, encoding='utf-8').read().splitlines()
         if p.suffix.lower() == '.md':      # baris bernombor, kecuali di bawah tajuk "Arahan ..."
@@ -53,6 +55,7 @@ def status(fail, gaya):
         if a['gaya'] == gaya: ada.setdefault((a['slug'], a['jenis']), []).append(a)
     for i in its:
         tk = ada.get((i['slug'], i['jenis']), [])
+        if i['jenis'] == 'ayat': tk = [a for a in tk if a['teks'] == i['teks']]   # istilah sama dalam CSV lain, ayat lain
         i['ambilan'] = [dict(fail=a['fail'], ambilan=a['ambilan'], skor=a.get('skor_whisper'), pilihan=a.get('pilihan'), tempoh=a['tempoh'])
                         for a in tk]
         i['siap'] = any(a.get('pilihan') for a in tk)
@@ -69,7 +72,7 @@ def senarai_gaya():
 
 
 def senarai_fail():
-    f = [ISTILAH] + sorted(p for p in D.glob('*') if p.suffix in ('.csv', '.md', '.txt') and p.name.lower() not in ('readme.md', 'requirements.txt') and p != ISTILAH)
+    f = [ISTILAH] + sorted(p for p in D.glob('*') if p != ISTILAH and (p.suffix == '.csv' or (p.suffix in ('.md', '.txt') and p.stem.lower().startswith('skrip'))))
     f += sorted((D / 'skrip').glob('*')) if (D / 'skrip').exists() else []
     return [str(p) for p in f if p.exists()]
 

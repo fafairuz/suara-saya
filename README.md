@@ -166,7 +166,13 @@ Lajur `jenis` diisi `BM`, `EN` atau `AKRONIM`. Akronim dipadankan ikut huruf bes
 bin/suara rakam      # http://127.0.0.1:8765, localhost sahaja
 ```
 
-Perakam ini halaman web tempatan. Pilih `istilah-saya.csv` (setiap istilah dirakam sebagai *perkataan* dan *dalam ayat*) atau [skrip-bank-suara.md](skrip-bank-suara.md) (241 ayat).
+Perakam ini halaman web tempatan. Menu **Fail** menyenaraikan setiap `*.csv` di akar repo, serta fail `skrip*.md` / `skrip*.txt`:
+
+- `istilah-saya.csv`: 205 istilah, setiap satu dirakam sebagai *perkataan* dan *dalam ayat*.
+- `istilah-video-integriti.csv`: 18 istilah dan 10 ayat dari video contoh video-template, termasuk perkataan BM yang selalu tergelincir.
+- [skrip-bank-suara.md](skrip-bank-suara.md): 241 ayat.
+
+Ayat contoh yang dikongsi beberapa istilah hanya dirakam sekali. Untuk tambah set baru, letak CSV dengan lajur yang sama di akar repo.
 
 | Kekunci | Tindakan |
 |---|---|
